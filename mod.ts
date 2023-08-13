@@ -9,7 +9,7 @@ import { open, Source, SourceStatus, write } from "./db.ts";
 export type { Source };
 export * from "./link.ts";
 
-const logger = createDebug("scrapbox-storage:storage.ts");
+const logger = createDebug("scrapbox-storage:mod.ts");
 
 /** 手動で更新を確認する。更新があればDBに反映する。
  *
