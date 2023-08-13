@@ -185,8 +185,10 @@ export const check = async (
 
     // 更新通知を出す
     if (updatedProjects.length > 0) {
+      emitChange(updatedProjects);
       const bc = new BroadcastChannel(notifyChannelName);
-      bc.postMessage({ type: "update", projects: updatedProjects } as Notify);
+      const notify: Notify = { type: "update", projects: updatedProjects };
+      bc.postMessage(notify);
       bc.close();
     }
     return result;
@@ -227,9 +229,38 @@ export const load = async (
   return list;
 };
 
-/** リンクデータの更新を取得する
- *
- * 別のセッションで更新されたものしか通知されない点に注意
+export type Listener = (notify: Notify) => void;
+/** projectをkey, listenerをvalueとするmap */
+const listeners = new Map<string, Set<Listener>>();
+
+/** broadcast channelで流すデータ */
+export interface Notify {
+  type: "update";
+  /** 更新されたproject */
+  projects: string[];
+}
+
+const emitChange = (projects: string[]) => {
+  const notify: Notify = { type: "update", projects };
+  for (
+    const listener of new Set(
+      projects.flatMap((project) => [...(listeners.get(project) ?? [])]),
+    )
+  ) {
+    listener?.(notify);
+  }
+};
+
+/** 更新通知用broadcast channelの名前 */
+const notifyChannelName = "scrapbox-storage-notify";
+// 他のsessionsでの更新を購読する
+const bc = new BroadcastChannel(notifyChannelName);
+bc.addEventListener(
+  "message",
+  (e: MessageEvent<Notify>) => emitChange(e.data.projects),
+);
+
+/** リンクデータの更新を購読する
  *
  * @param projects ここに指定されたprojectの更新のみを受け取る
  * @param listener 更新を受け取るlistener
@@ -237,17 +268,17 @@ export const load = async (
  */
 export const subscribe = (
   projects: readonly string[],
-  listener: (notify: Notify) => void,
+  listener: Listener,
 ): () => void => {
-  const bc = new BroadcastChannel(notifyChannelName);
-  const callback = (e: MessageEvent<Notify>) => {
-    if (!projects.some((project) => e.data.projects.includes(project))) return;
-    listener(e.data);
-  };
-  bc.addEventListener("message", callback);
+  for (const project of projects) {
+    const listeners2 = listeners.get(project) ?? new Set();
+    listeners2.add(listener);
+    listeners.set(project, listeners2);
+  }
   return () => {
-    bc.removeEventListener("message", callback);
-    bc.close();
+    for (const project of projects) {
+      listeners.get(project)?.delete?.(listener);
+    }
   };
 };
 
@@ -380,15 +411,6 @@ async function* fetchProjectStatus(
 
 /** DBの補完ソースを更新する */
 const write = async (data: Source) => (await open()).put("links", data);
-
-/** 更新通知用broadcast channelの名前 */
-const notifyChannelName = "scrapbox-storage-notify";
-/** broadcast channelで流すデータ */
-interface Notify {
-  type: "update";
-  /** 更新されたproject */
-  projects: string[];
-}
 
 /** remoteからリンクデータを取得する */
 const downloadLinks = async (
