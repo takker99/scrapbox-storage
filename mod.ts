@@ -18,7 +18,7 @@ import {
 } from "./deps/scrapbox.ts";
 import { createDebug } from "./debug.ts";
 
-const logger = createDebug("scrapbox-storage:storage.ts");
+const logger = createDebug("scrapbox-storage:mod.ts");
 
 /** 圧縮したリンクデータ
  *
