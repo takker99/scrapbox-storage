@@ -23,13 +23,13 @@ export const check = async (
 ): Promise<Source[]> => {
   const db = await open();
 
-  // 更新する必要のあるデータを探し、フラグを立てる
-  logger.debug("check updates of links...");
-
   const projectsMaybeNeededUpgrade: ProjectStatus[] = [];
   const projectStatus: SourceStatus[] = [];
   try {
+    // 更新する必要のあるデータを探し、更新中フラグを立てる
     {
+      logger.debug("check updates of links...");
+
       const tx = db.transaction("status", "readwrite");
       await Promise.all(projects.map(async (project) => {
         const status = await tx.store.get(project);
@@ -56,10 +56,11 @@ export const check = async (
         tx.store.put(tempStatus);
       }));
       await tx.done;
+
+      logger.debug(
+        `checked. ${projectsMaybeNeededUpgrade.length} projects maybe need upgrade.`,
+      );
     }
-    logger.debug(
-      `checked. ${projectsMaybeNeededUpgrade.length} projects maybe need upgrade.`,
-    );
 
     // 更新するprojectsがなければ何もしない
     if (projectsMaybeNeededUpgrade.length === 0) return [];
@@ -67,6 +68,7 @@ export const check = async (
     /** 更新されたprojects */
     const updatedProjects: string[] = [];
     const result: Source[] = [];
+
     // 一つづつ更新する
     for await (const res of fetchProjectStatus(projectsMaybeNeededUpgrade)) {
       // project dataを取得できないときは、無効なprojectに分類しておく
@@ -122,10 +124,10 @@ export const check = async (
       bc.postMessage(notify);
       bc.close();
     }
+
     return result;
   } finally {
     // エラーが起きた場合も含め、フラグをもとに戻しておく
-
     const tx = db.transaction("status", "readwrite");
     const store = tx.store;
     await Promise.all(
