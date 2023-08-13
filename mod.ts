@@ -40,7 +40,7 @@ export const check = async (
         const now = new Date().getTime() / 1000;
         // 更新されたばかりのデータは飛ばす
         if (checked + updateInterval > now) return;
-        // 更新中にタブが強制終了した可能性を考慮して、更新中フラグが経った時刻より10分経過していたらデータ更新対称に含める
+        // 更新中にタブが強制終了した可能性を考慮して、更新中フラグが経った時刻より10分経過していたらデータ更新対象に含める
         if (status?.updating && checked + 600 > now) return;
 
         const tempStatus: ProjectStatus = {
