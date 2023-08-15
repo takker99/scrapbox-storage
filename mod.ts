@@ -2,83 +2,14 @@
 /// <reference lib="esnext" />
 /// <reference lib="dom" />
 
-import { DBSchema, IDBPDatabase, openDB } from "./deps/idb.ts";
-import {
-  getProject,
-  listProjects,
-  readLinksBulk,
-  Result,
-  toTitleLc,
-} from "./deps/scrapbox-rest.ts";
-import {
-  NotFoundError,
-  NotLoggedInError,
-  NotMemberError,
-  Project,
-} from "./deps/scrapbox.ts";
 import { createDebug } from "./debug.ts";
+import { downloadLinks } from "./remote.ts";
+import { fetchProjectStatus, ProjectStatus } from "./status.ts";
+import { open, Source, SourceStatus, write } from "./db.ts";
+export type { Source };
+export * from "./link.ts";
 
 const logger = createDebug("scrapbox-storage:mod.ts");
-
-/** 圧縮したリンクデータ
- *
- * property nameを省略することでデータ量を減らしている
- */
-export type CompressedLink = [
-  string, // title; page title
-  boolean, // hasIcon; whether to have images
-  number, // updated; 空ページのときは-1になる
-  ...string[], // links
-];
-
-/** link data */
-export interface Link {
-  /** page title */
-  title: string;
-
-  /** links the page has */
-  links: string[];
-
-  /** whether to have images */
-  hasIcon: boolean;
-
-  /** whether the page exists */
-  exists: boolean;
-
-  /** updated time (UNIX time) */
-  updated: number;
-}
-
-/** 圧縮したリンク情報を見やすくする */
-export const decode = (link: CompressedLink): Link => {
-  const [title, hasIcon, updated, ...links] = link;
-
-  return {
-    title,
-    links,
-    hasIcon,
-    exists: updated >= 0,
-    updated: Math.min(0, updated),
-  };
-};
-
-/** リンク情報をDB用に圧縮する */
-export const encode = (
-  link: Link,
-): CompressedLink => [
-  link.title,
-  link.hasIcon,
-  link.exists ? link.updated : -1,
-  ...link.links,
-];
-
-export interface Source {
-  /** project name (key) */
-  project: string;
-
-  /** link data */
-  links: CompressedLink[];
-}
 
 /** 手動で更新を確認する。更新があればDBに反映する。
  *
@@ -92,13 +23,13 @@ export const check = async (
 ): Promise<Source[]> => {
   const db = await open();
 
-  // 更新する必要のあるデータを探し、フラグを立てる
-  logger.debug("check updates of links...");
-
   const projectsMaybeNeededUpgrade: ProjectStatus[] = [];
   const projectStatus: SourceStatus[] = [];
   try {
+    // 更新する必要のあるデータを探し、更新中フラグを立てる
     {
+      logger.debug("check updates of links...");
+
       const tx = db.transaction("status", "readwrite");
       await Promise.all(projects.map(async (project) => {
         const status = await tx.store.get(project);
@@ -125,10 +56,11 @@ export const check = async (
         tx.store.put(tempStatus);
       }));
       await tx.done;
+
+      logger.debug(
+        `checked. ${projectsMaybeNeededUpgrade.length} projects maybe need upgrade.`,
+      );
     }
-    logger.debug(
-      `checked. ${projectsMaybeNeededUpgrade.length} projects maybe need upgrade.`,
-    );
 
     // 更新するprojectsがなければ何もしない
     if (projectsMaybeNeededUpgrade.length === 0) return [];
@@ -136,6 +68,7 @@ export const check = async (
     /** 更新されたprojects */
     const updatedProjects: string[] = [];
     const result: Source[] = [];
+
     // 一つづつ更新する
     for await (const res of fetchProjectStatus(projectsMaybeNeededUpgrade)) {
       // project dataを取得できないときは、無効なprojectに分類しておく
@@ -191,10 +124,10 @@ export const check = async (
       bc.postMessage(notify);
       bc.close();
     }
+
     return result;
   } finally {
     // エラーが起きた場合も含め、フラグをもとに戻しておく
-
     const tx = db.transaction("status", "readwrite");
     const store = tx.store;
     await Promise.all(
@@ -280,179 +213,4 @@ export const subscribe = (
       listeners.get(project)?.delete?.(listener);
     }
   };
-};
-
-/** リンクデータなどを管理するDatabase */
-let db: IDBPDatabase<LinkDB>;
-
-/** DBを取得する。まだ開いていなければ一度だけ開く */
-const open = async (): Promise<IDBPDatabase<LinkDB>> => {
-  db ??= await openDB<LinkDB>("scrapbox-storage", 1, {
-    upgrade(db) {
-      logger.time("update DB");
-
-      for (const name of db.objectStoreNames) {
-        db.deleteObjectStore(name);
-      }
-
-      db.createObjectStore("links", { keyPath: "project" });
-      db.createObjectStore("status", { keyPath: "project" });
-
-      logger.timeEnd("update DB");
-    },
-  });
-
-  return db;
-};
-
-/** リンクデータDBのschema */
-interface LinkDB extends DBSchema {
-  /** link dataを格納するstore */
-  links: {
-    value: Source;
-    key: string;
-  };
-
-  /** projectの更新状況を格納するstore */
-  status: {
-    value: SourceStatus;
-    key: string;
-  };
-}
-
-type SourceStatus = ProjectStatus | InvalidProjectStatus;
-
-interface ProjectStatus {
-  /** project name (key) */
-  project: string;
-
-  /** project id
-   *
-   * projectsの更新日時を一括取得するときに使う
-   */
-  id?: string;
-
-  /** 有効なprojectかどうか
-   *
-   * アクセス権のないprojectと存在しないprojectの場合はfalseになる
-   */
-  isValid: true;
-
-  /** projectの最終更新日時
-   *
-   * リンクデータの更新を確認するときに使う
-   */
-  updated: number;
-
-  /** データの最終確認日時 */
-  checked: number;
-
-  /** 更新中フラグ */
-  updating: boolean;
-}
-
-interface InvalidProjectStatus {
-  /** project name (key) */
-  project: string;
-
-  /** 有効なprojectかどうか
-   *
-   * アクセス権のないprojectと存在しないprojectの場合はfalseになる
-   */
-  isValid: false;
-}
-
-/** projectの情報を一括取得する */
-async function* fetchProjectStatus(
-  projects: ProjectStatus[],
-): AsyncGenerator<
-  Result<
-    Project & { checked: number },
-    (NotLoggedInError | NotFoundError | NotMemberError) & { project: string }
-  >,
-  void,
-  unknown
-> {
-  // idがあるものとないものとに分ける
-  const projectIds: string[] = [];
-  let newProjects: string[] = [];
-  const checkedMap = new Map<string, number>();
-  for (const project of projects) {
-    if (project.id) {
-      projectIds.push(project.id);
-    } else {
-      newProjects.push(project.project);
-    }
-    checkedMap.set(project.project, project.checked);
-  }
-  const result = await listProjects(projectIds);
-  if (!result.ok) {
-    // log inしていないときは、getProject()で全てのprojectのデータを取得する
-    newProjects = projects.map((project) => project.project);
-  } else {
-    for (const project of result.value.projects) {
-      if (!checkedMap.has(project.name)) continue;
-      yield {
-        ok: true,
-        value: { ...project, checked: checkedMap.get(project.name) ?? 0 },
-      };
-    }
-  }
-  for (const name of newProjects) {
-    const res = await getProject(name);
-    yield res.ok
-      ? {
-        ok: true,
-        value: { ...res.value, checked: checkedMap.get(name) ?? 0 },
-      }
-      : { ok: false, value: { ...res.value, project: name } };
-  }
-}
-
-/** DBの補完ソースを更新する */
-const write = async (data: Source) => (await open()).put("links", data);
-
-/** remoteからリンクデータを取得する */
-const downloadLinks = async (
-  project: string,
-): Promise<CompressedLink[]> => {
-  const reader = await readLinksBulk(project);
-  if ("name" in reader) {
-    console.error(reader);
-    throw new Error(`${reader.name}: ${reader.message}`);
-  }
-
-  const tag = `download and create Links of "${project}"`;
-  logger.time(tag);
-  const linkMap = new Map<string, Link>();
-
-  for await (const pages of reader) {
-    for (const page of pages) {
-      const titleLc = toTitleLc(page.title);
-      linkMap.set(titleLc, {
-        title: page.title,
-        hasIcon: page.hasIcon,
-        updated: page.updated,
-        links: page.links,
-        exists: true,
-      });
-
-      for (const link of page.links) {
-        const linkLc = toTitleLc(link);
-
-        if (linkMap.has(linkLc)) continue;
-
-        linkMap.set(linkLc, {
-          title: link,
-          hasIcon: false,
-          updated: 0,
-          links: [],
-          exists: false,
-        });
-      }
-    }
-  }
-  logger.timeEnd(tag);
-
-  return [...linkMap.values()].map((link) => encode(link));
 };
