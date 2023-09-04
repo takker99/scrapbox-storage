@@ -9,6 +9,7 @@ import { open, Source, SourceStatus, write } from "./db.ts";
 import { emitChange } from "./subscribe.ts";
 export { subscribe } from "./subscribe.ts";
 export type { LinkEvent, Listener } from "./subscribe.ts";
+export { setDebugMode } from "./debug.ts";
 export type { Source };
 export * from "./link.ts";
 
