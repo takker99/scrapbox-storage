@@ -4,7 +4,7 @@
  */
 export type CompressedLink = [
   string, // title; page title
-  boolean, // hasIcon; whether to have images
+  string | undefined, // image page thumbnail
   number, // updated; 空ページのときは-1になる
   ...string[], // links
 ];
@@ -17,8 +17,8 @@ export interface Link {
   /** links the page has */
   links: string[];
 
-  /** whether to have images */
-  hasIcon: boolean;
+  /** page thumbnail */
+  image?: string;
 
   /** whether the page exists */
   exists: boolean;
@@ -29,12 +29,12 @@ export interface Link {
 
 /** 圧縮したリンク情報を見やすくする */
 export const decode = (link: CompressedLink): Link => {
-  const [title, hasIcon, updated, ...links] = link;
+  const [title, image, updated, ...links] = link;
 
   return {
     title,
     links,
-    hasIcon,
+    image,
     exists: updated >= 0,
     updated: Math.min(0, updated),
   };
@@ -45,7 +45,7 @@ export const encode = (
   link: Link,
 ): CompressedLink => [
   link.title,
-  link.hasIcon,
+  link.image,
   link.exists ? link.updated : -1,
   ...link.links,
 ];
