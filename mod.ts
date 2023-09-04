@@ -6,6 +6,9 @@ import { createDebug } from "./debug.ts";
 import { downloadLinks } from "./remote.ts";
 import { fetchProjectStatus, ProjectStatus } from "./status.ts";
 import { open, Source, SourceStatus, write } from "./db.ts";
+import { emitChange } from "./subscribe.ts";
+export { subscribe } from "./subscribe.ts";
+export type { LinkEvent, Listener } from "./subscribe.ts";
 export type { Source };
 export * from "./link.ts";
 
@@ -117,13 +120,7 @@ export const check = async (
     }
 
     // 更新通知を出す
-    if (updatedProjects.length > 0) {
-      emitChange(updatedProjects);
-      const bc = new BroadcastChannel(notifyChannelName);
-      const notify: Notify = { type: "update", projects: updatedProjects };
-      bc.postMessage(notify);
-      bc.close();
-    }
+    if (updatedProjects.length > 0) emitChange(updatedProjects);
 
     return result;
   } finally {
@@ -160,57 +157,4 @@ export const load = async (
   logger.debug(`Read links of ${projects.length} projects in ${ms}ms`);
 
   return list;
-};
-
-export type Listener = (notify: Notify) => void;
-/** projectをkey, listenerをvalueとするmap */
-const listeners = new Map<string, Set<Listener>>();
-
-/** broadcast channelで流すデータ */
-export interface Notify {
-  type: "update";
-  /** 更新されたproject */
-  projects: string[];
-}
-
-const emitChange = (projects: string[]) => {
-  const notify: Notify = { type: "update", projects };
-  for (
-    const listener of new Set(
-      projects.flatMap((project) => [...(listeners.get(project) ?? [])]),
-    )
-  ) {
-    listener?.(notify);
-  }
-};
-
-/** 更新通知用broadcast channelの名前 */
-const notifyChannelName = "scrapbox-storage-notify";
-// 他のsessionsでの更新を購読する
-const bc = new BroadcastChannel(notifyChannelName);
-bc.addEventListener(
-  "message",
-  (e: MessageEvent<Notify>) => emitChange(e.data.projects),
-);
-
-/** リンクデータの更新を購読する
- *
- * @param projects ここに指定されたprojectの更新のみを受け取る
- * @param listener 更新を受け取るlistener
- * @returm listener解除などをする後始末函数
- */
-export const subscribe = (
-  projects: readonly string[],
-  listener: Listener,
-): () => void => {
-  for (const project of projects) {
-    const listeners2 = listeners.get(project) ?? new Set();
-    listeners2.add(listener);
-    listeners.set(project, listeners2);
-  }
-  return () => {
-    for (const project of projects) {
-      listeners.get(project)?.delete?.(listener);
-    }
-  };
 };
