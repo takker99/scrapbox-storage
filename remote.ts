@@ -23,7 +23,7 @@ export const downloadLinks = async (
       const titleLc = toTitleLc(page.title);
       linkMap.set(titleLc, {
         title: page.title,
-        hasIcon: page.hasIcon,
+        image: page.image,
         updated: page.updated,
         links: page.links,
         exists: true,
@@ -36,7 +36,6 @@ export const downloadLinks = async (
 
         linkMap.set(linkLc, {
           title: link,
-          hasIcon: false,
           updated: 0,
           links: [],
           exists: false,
