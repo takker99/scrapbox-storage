@@ -11,4 +11,5 @@ export type {
   NotLoggedInError,
   NotMemberError,
   Project,
+  SearchedTitle,
 } from "https://raw.githubusercontent.com/scrapbox-jp/types/0.5.0/rest.ts";

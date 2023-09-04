@@ -96,10 +96,14 @@ export const check = async (
       if (res.value.updated < res.value.checked) {
         logger.debug(`no updates in "${res.value.name}"`);
       } else {
+        const res2 = await downloadLinks(res.value.name);
+        if (!res2.ok) {
+          throw Error(`${res2.value.name} ${res2.value.message}`);
+        }
         // リンクデータを更新する
         const data: Source = {
           project: res.value.name,
-          links: await downloadLinks(res.value.name),
+          links: res2.value,
         };
         result.push(data);
 
