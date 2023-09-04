@@ -1,49 +1,43 @@
-import { readLinksBulk, toTitleLc } from "./deps/scrapbox-rest.ts";
-import { CompressedLink, encode, Link } from "./link.ts";
+import {
+  getLinks,
+  InvalidFollowingIdError,
+  Result,
+} from "./deps/scrapbox-rest.ts";
+import { CompressedLink } from "./link.ts";
 import { createDebug } from "./debug.ts";
+import {
+  NotFoundError,
+  NotLoggedInError,
+  SearchedTitle,
+} from "./deps/scrapbox.ts";
+import { convertLinks } from "./convertLinks.ts";
 
 const logger = createDebug("scrapbox-storage:remote.ts");
 
 /** remoteからリンクデータを取得する */
 export const downloadLinks = async (
   project: string,
-): Promise<CompressedLink[]> => {
-  const reader = await readLinksBulk(project);
-  if ("name" in reader) {
-    console.error(reader);
-    throw new Error(`${reader.name}: ${reader.message}`);
-  }
+): Promise<
+  Result<
+    CompressedLink[],
+    NotFoundError | NotLoggedInError | InvalidFollowingIdError
+  >
+> => {
+  let followingId: string | undefined;
+  const pages: SearchedTitle[] = [];
 
   const tag = `download and create Links of "${project}"`;
   logger.time(tag);
-  const linkMap = new Map<string, Link>();
 
-  for await (const pages of reader) {
-    for (const page of pages) {
-      const titleLc = toTitleLc(page.title);
-      linkMap.set(titleLc, {
-        title: page.title,
-        image: page.image,
-        updated: page.updated,
-        links: page.links,
-        exists: true,
-      });
+  do {
+    const res = await getLinks(project, { followingId });
+    if (!res.ok) return res;
+    followingId = res.value.followingId;
+    pages.push(...res.value.pages);
+  } while (followingId);
+  const result = convertLinks(pages);
 
-      for (const link of page.links) {
-        const linkLc = toTitleLc(link);
-
-        if (linkMap.has(linkLc)) continue;
-
-        linkMap.set(linkLc, {
-          title: link,
-          updated: 0,
-          links: [],
-          exists: false,
-        });
-      }
-    }
-  }
   logger.timeEnd(tag);
 
-  return [...linkMap.values()].map((link) => encode(link));
+  return { ok: true, value: result };
 };
