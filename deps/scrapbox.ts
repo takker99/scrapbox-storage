@@ -5,11 +5,11 @@ export type {
   Line,
   Node,
   Scrapbox,
-} from "https://raw.githubusercontent.com/scrapbox-jp/types/0.7.0/userscript.ts";
+} from "https://raw.githubusercontent.com/scrapbox-jp/types/0.7.1/userscript.ts";
 export type {
   NotFoundError,
   NotLoggedInError,
   NotMemberError,
   Project,
   SearchedTitle,
-} from "https://raw.githubusercontent.com/scrapbox-jp/types/0.7.0/rest.ts";
+} from "https://raw.githubusercontent.com/scrapbox-jp/types/0.7.1/rest.ts";
