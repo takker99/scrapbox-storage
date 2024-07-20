@@ -51,7 +51,7 @@ export async function* fetchProjectStatus(
   projects: ProjectStatus[],
 ): AsyncGenerator<
   Result<
-    Project & { checked: number },
+    Omit<Project, "plan" | "trialing"> & { checked: number },
     (NotLoggedInError | NotFoundError | NotMemberError) & { project: string }
   >,
   void,
