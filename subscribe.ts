@@ -1,30 +1,63 @@
-export type Listener = (notify: LinkEvent) => void;
-/** projectをkey, listenerをvalueとするmap */
-const listeners = new Map<string, Set<Listener>>();
+import { SearchedTitle } from "./deps/scrapbox.ts";
 
-/** broadcast channelで流すデータ */
+export type Listener = (event: LinkEvent) => void;
+
+/** リンク更新時に送られるイベント */
 export interface LinkEvent {
-  type: "update";
+  type: "links:changed";
   /** 更新されたproject */
-  projects: string[];
+  pages: (UpdatedPage | DeletedPage)[];
 }
 
+export interface UpdatedPage extends SearchedTitle {
+  deleted: false;
+}
+export interface DeletedPage {
+  title: string;
+  deleted: true;
+}
+
+/** リンクデータの更新を購読する
+ *
+ * @param projects ここに指定されたprojectの更新のみを受け取る
+ * @param listener 更新を受け取るlistener
+ * @returm listener解除などをする後始末函数
+ */
+export const subscribe = (
+  projects: Iterable<string>,
+  listener: Listener,
+): () => void => {
+  listeners.set(
+    listener,
+    new Set(projects).union(listeners.get(listener) ?? new Set()),
+  );
+  return () => listeners.delete(listener);
+};
+
 /** リンクデータの更新を通知する */
-export const emitChange = (projects: string[]) => {
-  const event: LinkEvent = { type: "update", projects };
+export const emitChange = (
+  diffs: Map<string, (UpdatedPage | DeletedPage)[]>,
+) => {
+  const event: LinkEventInBC = { type: "links:changed", diffs };
   emitChange_(event);
   const bc = new BroadcastChannel(notifyChannelName);
   bc.postMessage(event);
   bc.close();
 };
 
-const emitChange_ = (event: LinkEvent) => {
+interface LinkEventInBC {
+  type: "links:changed";
+  diffs: Map<string, (UpdatedPage | DeletedPage)[]>;
+}
+
+const emitChange_ = (event: LinkEventInBC) => {
   for (
-    const listener of new Set(
-      event.projects.flatMap((project) => [...(listeners.get(project) ?? [])]),
-    )
+    const [listener, projects] of listeners
   ) {
-    listener?.(event);
+    listener({
+      type: "links:changed",
+      pages: [...projects].flatMap((project) => event.diffs.get(project) ?? []),
+    });
   }
 };
 
@@ -34,27 +67,8 @@ const notifyChannelName = "scrapbox-storage-notify";
 const bc = new BroadcastChannel(notifyChannelName);
 bc.addEventListener(
   "message",
-  (e: MessageEvent<LinkEvent>) => emitChange_(e.data),
+  (e: MessageEvent<LinkEventInBC>) => emitChange_(e.data),
 );
 
-/** リンクデータの更新を購読する
- *
- * @param projects ここに指定されたprojectの更新のみを受け取る
- * @param listener 更新を受け取るlistener
- * @returm listener解除などをする後始末函数
- */
-export const subscribe = (
-  projects: readonly string[],
-  listener: Listener,
-): () => void => {
-  for (const project of projects) {
-    const listeners2 = listeners.get(project) ?? new Set();
-    listeners2.add(listener);
-    listeners.set(project, listeners2);
-  }
-  return () => {
-    for (const project of projects) {
-      listeners.get(project)?.delete?.(listener);
-    }
-  };
-};
+/** listenerをkey, listenerが監視するprojectのリストをvalueとしたmap */
+const listeners = new Map<Listener, Set<string>>();

@@ -1,57 +1,24 @@
-import { getProject, listProjects, Result } from "./deps/scrapbox-rest.ts";
+import { createErr, createOk, Result } from "./deps/option-t.ts";
 import {
+  getProject,
+  listProjects,
   NotFoundError,
   NotLoggedInError,
   NotMemberError,
   Project,
 } from "./deps/scrapbox.ts";
+import { ProjectForDB } from "./schema-v2.ts";
 
-export interface ProjectStatus {
-  /** project name (key) */
-  project: string;
-
-  /** project id
-   *
-   * projectsの更新日時を一括取得するときに使う
-   */
-  id?: string;
-
-  /** 有効なprojectかどうか
-   *
-   * アクセス権のないprojectと存在しないprojectの場合はfalseになる
-   */
-  isValid: true;
-
-  /** projectの最終更新日時
-   *
-   * リンクデータの更新を確認するときに使う
-   */
-  updated: number;
-
-  /** データの最終確認日時 */
+export interface ProjectStatus extends Omit<Project, "plan" | "trialing"> {
   checked: number;
-
-  /** 更新中フラグ */
-  updating: boolean;
-}
-
-export interface InvalidProjectStatus {
-  /** project name (key) */
-  project: string;
-
-  /** 有効なprojectかどうか
-   *
-   * アクセス権のないprojectと存在しないprojectの場合はfalseになる
-   */
-  isValid: false;
 }
 
 /** projectの情報を一括取得する */
 export async function* fetchProjectStatus(
-  projects: ProjectStatus[],
+  projects: Iterable<ProjectForDB>,
 ): AsyncGenerator<
   Result<
-    Omit<Project, "plan" | "trialing"> & { checked: number },
+    ProjectStatus,
     (NotLoggedInError | NotFoundError | NotMemberError) & { project: string }
   >,
   void,
@@ -61,34 +28,34 @@ export async function* fetchProjectStatus(
   const projectIds: string[] = [];
   let newProjects: string[] = [];
   const checkedMap = new Map<string, number>();
+  const names: string[] = [];
   for (const project of projects) {
+    if (!project.isValid) continue;
     if (project.id) {
       projectIds.push(project.id);
     } else {
-      newProjects.push(project.project);
+      newProjects.push(project.name);
     }
-    checkedMap.set(project.project, project.checked);
+    names.push(project.name);
+    checkedMap.set(project.name, project.checked);
   }
   const result = await listProjects(projectIds);
   if (!result.ok) {
     // log inしていないときは、getProject()で全てのprojectのデータを取得する
-    newProjects = projects.map((project) => project.project);
+    newProjects = names;
   } else {
     for (const project of result.value.projects) {
       if (!checkedMap.has(project.name)) continue;
-      yield {
-        ok: true,
-        value: { ...project, checked: checkedMap.get(project.name) ?? 0 },
-      };
+      yield createOk({
+        ...project,
+        checked: checkedMap.get(project.name) ?? 0,
+      });
     }
   }
   for (const name of newProjects) {
     const res = await getProject(name);
     yield res.ok
-      ? {
-        ok: true,
-        value: { ...res.value, checked: checkedMap.get(name) ?? 0 },
-      }
-      : { ok: false, value: { ...res.value, project: name } };
+      ? createOk({ ...res.value, checked: checkedMap.get(name) ?? 0 })
+      : createErr({ ...res.value, project: name });
   }
 }
