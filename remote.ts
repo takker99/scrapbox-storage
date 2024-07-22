@@ -4,7 +4,7 @@ import {
   Result,
 } from "./deps/scrapbox-rest.ts";
 import { CompressedLink } from "./link.ts";
-import { createDebug } from "./debug.ts";
+import { createDebug } from "./deps/debug.ts";
 import {
   NotFoundError,
   NotLoggedInError,
