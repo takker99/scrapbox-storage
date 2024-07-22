@@ -1,6 +1,6 @@
 import { DBSchema, IDBPDatabase, openDB } from "./deps/idb.ts";
 import { InvalidProjectStatus, ProjectStatus } from "./status.ts";
-import { createDebug } from "./debug.ts";
+import { createDebug } from "./deps/debug.ts";
 import { CompressedLink } from "./link.ts";
 
 const logger = createDebug("scrapbox-storage:db.ts");
