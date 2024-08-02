@@ -1,7 +1,7 @@
-import { DBSchema, IDBPDatabase, openDB } from "./deps/idb.ts";
-import { InvalidProjectStatus, ProjectStatus } from "./status.ts";
-import { createDebug } from "./deps/debug.ts";
-import { CompressedLink } from "./link.ts";
+import { type DBSchema, type IDBPDatabase, openDB } from "idb";
+import { createDebug } from "@takker/debug-js";
+import type { InvalidProjectStatus, ProjectStatus } from "./status.ts";
+import type { CompressedLink } from "./link.ts";
 
 const logger = createDebug("scrapbox-storage:db.ts");
 

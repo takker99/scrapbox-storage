@@ -1,0 +1,30 @@
+{
+  "name": "@takker/cosense-storage",
+  "version": "0.0.0",
+  "exports": "./mod.ts",
+  "tasks": {
+    "check": "deno fmt && deno lint --fix && deno check --remote **/*.ts",
+    "check:dry": "deno fmt --check && deno lint && deno check --remote **/*.ts",
+    "update:check": "deno run --allow-env --allow-read --allow-write=.,'~/.local/share/deno-wasmbuild' --allow-run=git,deno --allow-net=deno.land,raw.githubusercontent.com,esm.sh,jsr.io,registry.npmjs.org,api.jsr.io jsr:@molt/cli@0.19",
+    "update": "deno task update:check --write",
+    "publish:check": "deno task check:dry && deno publish --dry-run --allow-dirty",
+    "publish": "deno run --allow-env --allow-run=deno --allow-read --allow-write=deno.jsonc jsr:@david/publish-on-tag@0.1.x"
+  },
+  "imports": {
+    "@cosense/std": "jsr:@cosense/std@^0.28.1",
+    "@cosense/types": "jsr:@cosense/types@0.10",
+    "@std/assert": "jsr:@std/assert@1",
+    "@takker/debug-js": "jsr:@takker/debug-js@0.1",
+    "date-fns": "npm:date-fns@3",
+    "idb": "npm:idb@8",
+    "option-t": "npm:option-t@49"
+  },
+  "compilerOptions": {
+    "lib": [
+      "esnext",
+      "dom",
+      "dom.iterable",
+      "deno.ns"
+    ]
+  }
+}

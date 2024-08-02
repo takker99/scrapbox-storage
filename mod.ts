@@ -1,12 +1,9 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-
-import { createDebug } from "./deps/debug.ts";
+import { createDebug } from "@takker/debug-js";
 import { downloadLinks } from "./remote.ts";
-import { fetchProjectStatus, ProjectStatus } from "./status.ts";
-import { open, Source, SourceStatus, write } from "./db.ts";
+import { fetchProjectStatus, type ProjectStatus } from "./status.ts";
+import { open, type Source, type SourceStatus, write } from "./db.ts";
 import { emitChange } from "./subscribe.ts";
+import { isErr, unwrapErr, unwrapOk } from "option-t/plain_result";
 export { subscribe } from "./subscribe.ts";
 export type { LinkEvent, Listener } from "./subscribe.ts";
 export type { Source };
@@ -75,50 +72,53 @@ export const check = async (
     // 一つづつ更新する
     for await (const res of fetchProjectStatus(projectsMaybeNeededUpgrade)) {
       // project dataを取得できないときは、無効なprojectに分類しておく
-      if (!res.ok) {
-        projectStatus.push({ project: res.value.project, isValid: false });
-        switch (res.value.name) {
+      if (isErr(res)) {
+        const { project, name } = unwrapErr(res);
+        projectStatus.push({ project, isValid: false });
+        switch (name) {
           case "NotFoundError":
-            logger.warn(`"${res.value.project}" is not found.`);
+            logger.warn(`"${project}" is not found.`);
             continue;
           case "NotMemberError":
-            logger.warn(`You are not a member of "${res.value.project}".`);
+            logger.warn(`You are not a member of "${project}".`);
             continue;
           case "NotLoggedInError":
             logger.warn(
-              `You are not a member of "${res.value.project}" or You are not logged in yet.`,
+              `You are not a member of "${project}" or You are not logged in yet.`,
             );
             continue;
         }
       }
 
+      const { name, updated, checked, id } = unwrapOk(res);
       // projectの最終更新日時から、updateの要不要を調べる
-      if (res.value.updated < res.value.checked) {
-        logger.debug(`no updates in "${res.value.name}"`);
+      if (updated < checked) {
+        logger.debug(`no updates in "${name}"`);
       } else {
-        const res2 = await downloadLinks(res.value.name);
-        if (!res2.ok) {
-          throw Error(`${res2.value.name} ${res2.value.message}`);
+        const res2 = await downloadLinks(name);
+        if (isErr(res2)) {
+          const { name, message } = unwrapErr(res2);
+          throw Error(`${name} ${message}`);
         }
         // リンクデータを更新する
         const data: Source = {
-          project: res.value.name,
-          links: res2.value,
+          project: name,
+          links: unwrapOk(res2),
         };
         result.push(data);
 
-        logger.time(`write data of "${res.value.name}"`);
+        logger.time(`write data of "${name}"`);
         await write(data);
-        updatedProjects.push(res.value.name);
-        logger.timeEnd(`write data of "${res.value.name}"`);
+        updatedProjects.push(name);
+        logger.timeEnd(`write data of "${name}"`);
       }
 
       projectStatus.push({
-        project: res.value.name,
+        project: name,
         isValid: true,
-        id: res.value.id,
+        id,
         checked: new Date().getTime() / 1000,
-        updated: res.value.updated,
+        updated,
         updating: false,
       });
     }
