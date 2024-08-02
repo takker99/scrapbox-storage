@@ -1,5 +1,6 @@
-import { SearchedTitle, toTitleLc } from "./deps/scrapbox.ts";
-import { CompressedLink, encode, Link } from "./link.ts";
+import type { SearchedTitle } from "@cosense/types/rest";
+import { toTitleLc } from "@cosense/std/title";
+import { type CompressedLink, encode, type Link } from "./link.ts";
 
 /** Search Title APIから取得したリンクデータを、DBに格納する形式に変換する */
 export const convertLinks = (pages: SearchedTitle[]): CompressedLink[] => {

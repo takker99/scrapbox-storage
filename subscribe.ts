@@ -10,7 +10,7 @@ export interface LinkEvent {
 }
 
 /** リンクデータの更新を通知する */
-export const emitChange = (projects: string[]) => {
+export const emitChange = (projects: string[]): void => {
   const event: LinkEvent = { type: "update", projects };
   emitChange_(event);
   const bc = new BroadcastChannel(notifyChannelName);
