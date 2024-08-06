@@ -1,9 +1,10 @@
 import { createDebug } from "@takker/debug-js";
 import { downloadLinks } from "./remote.ts";
 import { fetchProjectStatus, type ProjectStatus } from "./status.ts";
-import { open, type Source, type SourceStatus, write } from "./db.ts";
+import { open, write } from "./db.ts";
 import { emitChange } from "./subscribe.ts";
 import { isErr, unwrapErr, unwrapOk } from "option-t/plain_result";
+import type { Source, SourceStatus } from "./schema-v1.ts";
 export { subscribe } from "./subscribe.ts";
 export type { LinkEvent, Listener } from "./subscribe.ts";
 export type { Source };
