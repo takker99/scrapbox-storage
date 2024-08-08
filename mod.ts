@@ -79,29 +79,29 @@ export const check = async (
       // FetchErrorは一時的なエラーである可能性が高いので、無効にせず無視する
       if (isErr(res)) {
         const { project, name } = unwrapErr(res);
+        switch (name) {
+          default:
+            continue;
+          case "NotFoundError":
+            logger.warn(`"${project}" is not found.`);
+            break;
+          case "NotMemberError":
+            logger.warn(`You are not a member of "${project}".`);
+            break;
+          case "NotLoggedInError":
+            logger.warn(
+              `You are not a member of "${project}" or You are not logged in yet.`,
+            );
+            break;
+        }
         projectStatus.set(project, {
           name: project,
           checked: now,
           updating: false,
           isValid: false,
+          reason: name,
         });
-        switch (name) {
-          case "NotFoundError":
-            logger.warn(`"${project}" is not found.`);
-            continue;
-          case "NotMemberError":
-            logger.warn(`You are not a member of "${project}".`);
-            continue;
-          case "NotLoggedInError":
-            logger.warn(
-              `You are not a member of "${project}" or You are not logged in yet.`,
-            );
-            continue;
-          case "HTTPError":
-          case "NetworkError":
-          case "AbortError":
-            continue;
-        }
+        continue;
       }
 
       const { checked, ...project } = unwrapOk(res);

@@ -54,4 +54,7 @@ export interface InvalidProject {
    * アクセス権のないprojectと存在しないprojectの場合はfalseになる
    */
   isValid: false;
+
+  /** the reason why the project is invalid */
+  reason: "NotFoundError" | "NotMemberError" | "NotLoggedInError";
 }
