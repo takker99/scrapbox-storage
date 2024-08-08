@@ -121,7 +121,7 @@ export const check = async (
       const diff: Diff = {
         added: new Map(),
         updated: new Map(),
-        deleted: new Set(),
+        deleted: new Map(),
       };
       let prevLower = 0;
 
@@ -158,12 +158,12 @@ export const check = async (
           if (page.project !== project.name) continue;
           const newPage = diff.added.get(page.id);
           if (!newPage) {
-            diff.deleted.add(page.id);
+            diff.deleted.set(page.id, page);
             continue;
           }
           diff.deleted.delete(page.id);
           if (page.updated < newPage.updated) {
-            diff.updated.set(page.id, newPage);
+            diff.updated.set(page.id, [page, newPage]);
             cursor.update(newPage);
           }
           diff.added.delete(page.id);
@@ -176,7 +176,7 @@ export const check = async (
         // add new pages
         ...[...diff.added].map(([pageId, page]) => tx.store.put(page, pageId)),
         // delete dropped pages
-        ...[...diff.deleted].map((pageId) => tx.store.delete(pageId)),
+        ...[...diff.deleted].map(([pageId]) => tx.store.delete(pageId)),
       ]);
       await tx.done;
       logger.timeEnd(tag);

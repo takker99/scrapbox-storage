@@ -21,11 +21,16 @@ export interface Diff {
   /** updated pages
    *
    * key is page id
+   *
+   * the value is a tuple of old and new link data
    */
-  updated: Map<string, Link>;
+  updated: Map<string, [Link, Link]>;
 
-  /** deleted page ids */
-  deleted: Set<string>;
+  /** deleted page ids
+   *
+   * key is page id
+   */
+  deleted: Map<string, Link>;
 }
 
 /** リンクデータの更新を購読する
