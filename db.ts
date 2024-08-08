@@ -22,6 +22,18 @@ export const open = async (): Promise<IDBPDatabase<SchemaV1>> => {
 
       logger.timeEnd("update DB");
     },
+    blocked(currentVersion, blockedVersion) {
+      const message =
+        `The database "@takker/cosense-storage"(v${blockedVersion}) is blocked because the older one (v${currentVersion}) is opened in other tabs.\n Please close the other tabs and reload this page.`;
+      logger.error(message);
+      alert(message);
+    },
+    blocking(currentVersion, blockingVersion) {
+      const message =
+        `The database "@takker/cosense-storage"(v${currentVersion}) is blocking the newer one (v${blockingVersion}) opened.\n Please close this page.`;
+      logger.error(message);
+      alert(message);
+    },
   });
 
   return db;
