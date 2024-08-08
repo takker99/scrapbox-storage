@@ -1,5 +1,5 @@
 import { createDebug } from "@takker/debug-js";
-import { fetchProjectStatus } from "./status.ts";
+import { readProjects } from "./project.ts";
 import { open } from "./db.ts";
 import { type Diff, emitChange } from "./subscribe.ts";
 import type { ProjectForDB, ValidProject } from "./schema-v2.ts";
@@ -74,7 +74,7 @@ export const check = async (
     const now = getUnixTime(new Date());
 
     // 一つづつ更新する
-    for await (const res of fetchProjectStatus(projectStatus.values())) {
+    for await (const res of readProjects(projectStatus.values())) {
       // project dataを取得できないときは、無効なprojectに分類しておく
       // FetchErrorは一時的なエラーである可能性が高いので、無効にせず無視する
       if (isErr(res)) {

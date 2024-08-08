@@ -21,7 +21,7 @@ export interface ProjectStatus extends Omit<Project, "plan" | "trialing"> {
 }
 
 /** projectの情報を一括取得する */
-export async function* fetchProjectStatus(
+export async function* readProjects(
   projects: Iterable<ProjectForDB>,
 ): AsyncGenerator<
   Result<
@@ -32,25 +32,34 @@ export async function* fetchProjectStatus(
   unknown
 > {
   // idがあるものとないものとに分ける
-  const projectIds: string[] = [];
+  const notMemberProjectIds: string[] = [];
   let newProjects: string[] = [];
   const checkedMap = new Map<string, number>();
   const names: string[] = [];
   for (const project of projects) {
     if (!project.isValid) continue;
     if (project.id) {
-      projectIds.push(project.id);
+      // memberであるprojectはidを指定しなくても取得できるので除外する
+      if (!project.isMember) notMemberProjectIds.push(project.id);
     } else {
       newProjects.push(project.name);
     }
     names.push(project.name);
     checkedMap.set(project.name, project.checked);
   }
-  const result = await listProjects(projectIds);
-  if (isErr(result)) {
-    // log inしていないときは、getProject()で全てのprojectのデータを取得する
-    newProjects = names;
-  } else {
+  // projectIdsを50個ずつに分割してfetchする
+  // 414 Request-URI Too Longを避けるための処理
+  for (let i = 0; i < notMemberProjectIds.length; i += 50) {
+    const ids = notMemberProjectIds.slice(i, i + 50);
+    if (ids.length === 0) break;
+    // idは2つ以上必要なので、1つしかない場合は2つにする
+    if (ids.length === 1) ids.push(ids[0]);
+    const result = await listProjects(ids);
+    if (isErr(result)) {
+      // log inしていないときは、getProject()で全てのprojectのデータを取得する
+      newProjects = names;
+      break;
+    }
     for (const project of unwrapOk(result).projects) {
       if (!checkedMap.has(project.name)) continue;
       yield createOk({
