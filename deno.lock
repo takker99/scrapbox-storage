@@ -3,7 +3,7 @@
   "packages": {
     "specifiers": {
       "jsr:@core/unknownutil@^4.0.0": "jsr:@core/unknownutil@4.0.1",
-      "jsr:@cosense/std@^0.28.1": "jsr:@cosense/std@0.28.2",
+      "jsr:@cosense/std@^0.28.1": "jsr:@cosense/std@0.28.4",
       "jsr:@cosense/types@0.10": "jsr:@cosense/types@0.10.1",
       "jsr:@progfay/scrapbox-parser@9": "jsr:@progfay/scrapbox-parser@9.0.0",
       "jsr:@std/async@1": "jsr:@std/async@1.0.3",
@@ -18,8 +18,8 @@
       "@core/unknownutil@4.0.1": {
         "integrity": "5e08141ea8284d064bc4ee8c70aab42825355fb1399eaeb6140936f5f763f42d"
       },
-      "@cosense/std@0.28.2": {
-        "integrity": "e80550e16daf1266b0132c9f828f9744fe170714eecbe3fa3223df7ff75e4892",
+      "@cosense/std@0.28.4": {
+        "integrity": "1563399d4cd26c12866c471221f402fddd896cae389c141260d06d6bc1ea8cf1",
         "dependencies": [
           "jsr:@core/unknownutil@^4.0.0",
           "jsr:@cosense/types@0.10",
