@@ -1,41 +1,30 @@
-import { DBSchema } from "./deps/idb.ts";
-import { Project } from "./deps/scrapbox.ts";
+import type { DBSchema } from "idb";
+import type { Project } from "@cosense/types/rest";
+import type { Link } from "./link.ts";
 
 /** リンクデータDBのschema */
-export interface LinkDBV2 extends DBSchema {
+export interface SchemaV2 extends DBSchema {
   /** link dataを格納するstore */
-  links: {
-    value: PageForDB;
-    key: [string, string];
+  titles: {
+    value: Link;
+    /** page id */
+    key: string;
+    indexes: {
+      project: string;
+      updated: number;
+    };
   };
 
   /** projectの更新状況を格納するstore */
   projects: {
     value: ProjectForDB;
+    /** project name */
     key: string;
     indexes: {
-      /** データの最終確認日時で検索するためのindex */
       checked: number;
     };
   };
 }
-
-export interface PageForDB {
-  /** project name and page title (key) */
-  path: readonly [string, string];
-  link: CompressedLink;
-}
-
-/** 圧縮したリンクデータ
- *
- * property nameを省略することでデータ量を減らしている
- */
-export type CompressedLink = [
-  string, // page id
-  string | undefined, // image page thumbnail
-  number, // updated
-  ...string[], // links
-];
 
 export type ProjectForDB = ValidProject | InvalidProject;
 

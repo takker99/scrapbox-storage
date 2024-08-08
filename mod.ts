@@ -1,17 +1,13 @@
-/// <reference no-default-lib="true" />
-/// <reference lib="esnext" />
-/// <reference lib="dom" />
-
-import { createDebug } from "./deps/debug.ts";
+import { createDebug } from "@takker/debug-js";
 import { fetchProjectStatus } from "./status.ts";
 import { open } from "./db.ts";
-import { DeletedPage, emitChange, UpdatedPage } from "./subscribe.ts";
-import { PageForDB, ProjectForDB, ValidProject } from "./schema-v2.ts";
-import { getUnixTime } from "./deps/date-fns.ts";
-import { isErr, unwrapErr, unwrapOk } from "./deps/option-t.ts";
-import { getLinks } from "./deps/scrapbox.ts";
-import { decode, encode, Link } from "./link.ts";
-export type { Link } from "./link.ts";
+import { type Diff, emitChange } from "./subscribe.ts";
+import type { ProjectForDB, ValidProject } from "./schema-v2.ts";
+import { getUnixTime } from "date-fns/getUnixTime";
+import { isErr, unwrapErr, unwrapOk } from "option-t/plain_result";
+import { readLinksBulk } from "@cosense/std/rest";
+import type { Link } from "./link.ts";
+export * from "./link.ts";
 export * from "./subscribe.ts";
 
 const logger = createDebug("scrapbox-storage:mod.ts");
@@ -35,40 +31,35 @@ export const check = async (
       logger.debug("check updates of links...");
 
       const tx = db.transaction("projects", "readwrite");
-      await Promise.all(projects.map(async (name) => {
-        const status = await tx.store.get(name);
-
-        if (status?.isValid === false) return;
+      const now = getUnixTime(new Date());
+      const lower = now - 600;
+      for await (
+        const cursor of tx.store.index("checked").iterate(
+          IDBKeyRange.lowerBound(lower, true),
+        )
+      ) {
+        const status = cursor.value;
+        if (status?.isValid === false) continue;
 
         const prevChecked = status?.checked ?? 0;
-        const now = getUnixTime(new Date());
         // 更新されたばかりのデータは飛ばす
-        if (prevChecked + maxAge > now) return;
+        if (prevChecked + maxAge > now) continue;
         // 更新中にタブが強制終了した可能性を考慮して、更新中フラグが経った時刻より10分経過していたらデータ更新対象に含める
-        if (status?.updating && prevChecked + 600 > now) return;
+        if (status?.updating && prevChecked > lower) continue;
 
-        const tempStatus: ValidProject = {
-          name,
-          displayName: status?.displayName ?? name,
-          id: status?.id ?? "",
-          isValid: true,
-          publicVisible: status?.publicVisible ?? true,
-          isMember: status?.isMember ?? true,
-          loginStrategies: status?.loginStrategies ?? [],
-          theme: status?.theme ?? "default",
-          gyazoTeamsName: status?.gyazoTeamsName ?? null,
-          translation: status?.translation ?? true,
-          infobox: status?.infobox ?? true,
-          checked: prevChecked,
-          updated: status?.updated ?? 0,
-          created: status?.created ?? 0,
-          updating: true,
-        };
+        const name = status?.name ?? "";
+        const tempStatus = structuredClone(status);
+        tempStatus.updating = true;
 
         projectStatus.set(name, tempStatus);
-        tx.store.put(tempStatus);
-      }));
+        cursor.update(tempStatus);
+      }
       await tx.done;
+
+      for (const project of projects) {
+        if (projectStatus.has(project)) continue;
+        projectStatus.set(project, makeDummyValidProject(project));
+      }
 
       // 更新するprojectsがなければ何もしない
       if (projectStatus.size === 0) {
@@ -80,22 +71,12 @@ export const check = async (
       );
     }
 
-    /** 更新・新規作成されたlinks
-     *
-     * project nameをkey、linksをvalueとする
-     */
-    const updatedLinks = new Map<string, PageForDB[]>();
-    /** 削除されたlinks
-     *
-     * project nameをkey、titlesをvalueとする
-     */
-    const deletedLinks = new Map<string, Set<string>>();
-
     const now = getUnixTime(new Date());
 
     // 一つづつ更新する
     for await (const res of fetchProjectStatus(projectStatus.values())) {
       // project dataを取得できないときは、無効なprojectに分類しておく
+      // FetchErrorは一時的なエラーである可能性が高いので、無効にせず無視する
       if (isErr(res)) {
         const { project, name } = unwrapErr(res);
         projectStatus.set(project, {
@@ -116,71 +97,92 @@ export const check = async (
               `You are not a member of "${project}" or You are not logged in yet.`,
             );
             continue;
+          case "HTTPError":
+          case "NetworkError":
+          case "AbortError":
+            continue;
         }
       }
 
       const { checked, ...project } = unwrapOk(res);
+
       // projectの最終更新日時から、updateの要不要を調べる
       if (project.updated < checked) {
         logger.debug(`no updates in "${project.name}"`);
-      } else {
-        let followingId: string | undefined;
+        projectStatus.set(project.name, {
+          ...project,
+          isValid: true,
+          checked: now,
+          updating: false,
+        });
+        continue;
+      }
 
-        const query = IDBKeyRange.bound([project, ""], [project, []]);
-        const LinksToDelete = new Set(
-          (await db.getAllKeys("links", query)).map(([, title]) => title),
-        );
-        deletedLinks.set(project.name, LinksToDelete);
-        const updatedLinksInTheProject: PageForDB[] = [];
-        updatedLinks.set(project.name, updatedLinksInTheProject);
+      const diff: Diff = {
+        added: new Map(),
+        updated: new Map(),
+        deleted: new Set(),
+      };
+      let prevLower = 0;
 
-        const tag = `download and store links of "${project.name}"`;
-        logger.time(tag);
-        while (true) {
-          const result = await getLinks(project.name, { followingId });
-          if (!result.ok) {
-            logger.error(
-              `Failed to get links of "${project.name}" with ${result.value.name}: ${result.value.message}`,
-            );
-            LinksToDelete.clear();
-            break;
-          }
-          // Put only updated records
-          const tx = db.transaction("links", "readwrite");
-          await Promise.all(
-            result.value.pages.map(
-              async (page) => {
-                const prev = await tx.store.get([project.name, page.title]);
-                if (prev) LinksToDelete.delete(page.title);
-                if (prev && decode(prev).updated >= page.updated) return;
-                const encoded = encode({ project: project.name, ...page });
-                updatedLinksInTheProject.push(encoded);
-                await tx.store.put(encoded);
-              },
-            ),
+      const tag = `download and store links of "${project.name}"`;
+      logger.time(tag);
+      // pagesを取得し、更新分をDBに反映する
+      for await (const result of readLinksBulk(project.name)) {
+        if (isErr(result)) {
+          const { name, message } = unwrapErr(result);
+          logger.error(
+            `Failed to get links of "${project.name}" with ${name}: ${message}`,
           );
-          await tx.done;
-          if (!result.value.followingId) {
-            followingId = undefined;
-            break;
-          }
-          followingId = result.value.followingId;
+          break;
+        }
+        const titles = unwrapOk(result);
+        for (const title of titles) {
+          diff.added.set(title.id, { ...title, project: project.name });
         }
 
-        // delete dropped links
-        const tx = db.transaction("links", "readwrite");
-        await Promise.all(
-          [...LinksToDelete].map(
-            (title) => tx.store.delete([project.name, title]),
-          ),
+        // 取得したページは更新日時順に並んでいる。
+        // よって、その範囲と同じ範囲のデータだけをDBから逐次読み込んでいけば、
+        // 一度にDB全体のキーを走査することなく、削除されたページを特定できる。
+        const upper = Math.max(...titles.map((title) => title.updated));
+        const range = IDBKeyRange.bound(
+          prevLower,
+          upper,
+          true,
         );
+        prevLower = upper;
+
+        const tx = db.transaction("titles", "readwrite");
+        for await (const cursor of tx.store.index("updated").iterate(range)) {
+          const page = cursor.value;
+          if (page.project !== project.name) continue;
+          const newPage = diff.added.get(page.id);
+          if (!newPage) {
+            diff.deleted.add(page.id);
+            continue;
+          }
+          diff.deleted.delete(page.id);
+          if (page.updated < newPage.updated) {
+            diff.updated.set(page.id, newPage);
+            cursor.update(newPage);
+          }
+          diff.added.delete(page.id);
+        }
         await tx.done;
-        deletedLinks.set(project.name, LinksToDelete);
-        logger.timeEnd(tag);
-        logger.debug(
-          `Updated ${updatedLinksInTheProject.length} links and deleted ${LinksToDelete.size} links from "${project.name}"`,
-        );
       }
+
+      const tx = db.transaction("titles", "readwrite");
+      await Promise.all([
+        // add new pages
+        ...[...diff.added].map(([pageId, page]) => tx.store.put(page, pageId)),
+        // delete dropped pages
+        ...[...diff.deleted].map((pageId) => tx.store.delete(pageId)),
+      ]);
+      await tx.done;
+      logger.timeEnd(tag);
+      logger.debug(
+        `Update "/${project.name}": +${diff.added.size} pages, ~${diff.updated.size} pages, -${diff.deleted.size} pages`,
+      );
 
       projectStatus.set(project.name, {
         ...project,
@@ -188,30 +190,9 @@ export const check = async (
         checked: now,
         updating: false,
       });
-    }
 
-    // リンクの差分を通知する
-    {
-      const diffs = new Map<string, (UpdatedPage | DeletedPage)[]>();
-      for (const [project, links] of updatedLinks) {
-        const list = diffs.get(project) ?? [];
-        list.push(
-          ...links.map((link) => ({ deleted: false, ...decode(link) })),
-        );
-        diffs.set(project, list);
-      }
-      for (const [project, titles] of deletedLinks) {
-        const list = diffs.get(project) ?? [];
-        list.push(
-          ...[...titles].map((title) => ({
-            project,
-            title,
-            deleted: true as const,
-          })),
-        );
-        diffs.set(project, list);
-      }
-      if (diffs.size > 0) emitChange(diffs);
+      // リンクの差分を通知する
+      emitChange(project.name, diff);
     }
   } finally {
     // エラーが起きた場合も含め、フラグをもとに戻しておく
@@ -219,7 +200,7 @@ export const check = async (
     await Promise.all(
       [...projectStatus.values()].map((status) => {
         status.updating = false;
-        return tx.store.put(status);
+        return tx.store.put({ ...status });
       }),
     );
     await tx.done;
@@ -233,23 +214,39 @@ export const check = async (
 export const load = async (
   projects: Iterable<string>,
 ): Promise<Link[]> => {
-  const keys = [...new Set(projects)].sort();
+  const keys = [...new Set(projects)];
   if (keys.length === 0) return [];
 
-  const first = keys[0];
-  const last = keys[keys.length - 1];
-  const range = IDBKeyRange.bound([first, ""], [last, []]);
-
   const start = Date.now();
-  const links = await (await open()).getAll("links", range);
+  const db = await open();
+  const tx = db.transaction("titles", "readonly");
+  const index = tx.store.index("project");
+  const links =
+    (await Promise.all(keys.map((project) => index.getAll(project)))).flat();
+  await tx.done;
   logger.debug(
     `Read ${links.length} links from ${keys.length} projects in ${
       Date.now() - start
     }ms`,
   );
 
-  return links.flatMap((page) => {
-    const decoded = decode(page);
-    return keys.includes(decoded.project) ? [decoded] : [];
-  });
+  return links;
 };
+
+const makeDummyValidProject = (name: string): ValidProject => ({
+  name,
+  displayName: name,
+  id: "",
+  isValid: true,
+  publicVisible: true,
+  isMember: true,
+  loginStrategies: [],
+  theme: "default",
+  gyazoTeamsName: null,
+  translation: true,
+  infobox: true,
+  checked: 0,
+  updated: 0,
+  created: 0,
+  updating: true,
+});

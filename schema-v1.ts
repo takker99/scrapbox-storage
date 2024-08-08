@@ -1,4 +1,4 @@
-import { DBSchema } from "./deps/idb.ts";
+import type { DBSchema } from "idb";
 
 /** 圧縮したリンクデータ
  *
@@ -11,8 +11,16 @@ export type CompressedLink = [
   ...string[], // links
 ];
 
+export interface Source {
+  /** project name (key) */
+  project: string;
+
+  /** link data */
+  links: CompressedLink[];
+}
+
 /** リンクデータDBのschema */
-export interface LinkDBV1 extends DBSchema {
+export interface SchemaV1 extends DBSchema {
   /** link dataを格納するstore */
   links: {
     value: Source;

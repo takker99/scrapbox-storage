@@ -1,4 +1,4 @@
-import { SearchedTitle } from "./deps/scrapbox.ts";
+import type { Link } from "./link.ts";
 
 export type Listener = (event: LinkEvent) => void;
 
@@ -6,15 +6,26 @@ export type Listener = (event: LinkEvent) => void;
 export interface LinkEvent {
   type: "links:changed";
   /** 更新されたproject */
-  pages: (UpdatedPage | DeletedPage)[];
+  project: string;
+  /** 更新差分 */
+  diff: Diff;
 }
 
-export interface UpdatedPage extends SearchedTitle {
-  deleted: false;
-}
-export interface DeletedPage {
-  title: string;
-  deleted: true;
+export interface Diff {
+  /** added pages
+   *
+   * key is page id
+   */
+  added: Map<string, Link>;
+
+  /** updated pages
+   *
+   * key is page id
+   */
+  updated: Map<string, Link>;
+
+  /** deleted page ids */
+  deleted: Set<string>;
 }
 
 /** リンクデータの更新を購読する
@@ -35,29 +46,20 @@ export const subscribe = (
 };
 
 /** リンクデータの更新を通知する */
-export const emitChange = (
-  diffs: Map<string, (UpdatedPage | DeletedPage)[]>,
-) => {
-  const event: LinkEventInBC = { type: "links:changed", diffs };
-  emitChange_(event);
+export const emitChange = (project: string, diff: Diff): void => {
+  const event: LinkEvent = { type: "links:changed", project, diff };
+  emitChangeToListeners(event);
   const bc = new BroadcastChannel(notifyChannelName);
   bc.postMessage(event);
   bc.close();
 };
 
-interface LinkEventInBC {
-  type: "links:changed";
-  diffs: Map<string, (UpdatedPage | DeletedPage)[]>;
-}
-
-const emitChange_ = (event: LinkEventInBC) => {
+const emitChangeToListeners = (event: LinkEvent) => {
   for (
     const [listener, projects] of listeners
   ) {
-    listener({
-      type: "links:changed",
-      pages: [...projects].flatMap((project) => event.diffs.get(project) ?? []),
-    });
+    if (!projects.has(event.project)) continue;
+    listener(event);
   }
 };
 
@@ -67,7 +69,7 @@ const notifyChannelName = "scrapbox-storage-notify";
 const bc = new BroadcastChannel(notifyChannelName);
 bc.addEventListener(
   "message",
-  (e: MessageEvent<LinkEventInBC>) => emitChange_(e.data),
+  (e: MessageEvent<LinkEvent>) => emitChangeToListeners(e.data),
 );
 
 /** listenerをkey, listenerが監視するprojectのリストをvalueとしたmap */

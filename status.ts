@@ -1,13 +1,20 @@
-import { createErr, createOk, Result } from "./deps/option-t.ts";
 import {
+  type FetchError,
   getProject,
   listProjects,
-  NotFoundError,
-  NotLoggedInError,
-  NotMemberError,
-  Project,
-} from "./deps/scrapbox.ts";
-import { ProjectForDB } from "./schema-v2.ts";
+  type ProjectError,
+} from "@cosense/std/rest";
+import {
+  createErr,
+  createOk,
+  isErr,
+  isOk,
+  type Result,
+  unwrapErr,
+  unwrapOk,
+} from "option-t/plain_result";
+import type { Project } from "@cosense/types/rest";
+import type { ProjectForDB } from "./schema-v2.ts";
 
 export interface ProjectStatus extends Omit<Project, "plan" | "trialing"> {
   checked: number;
@@ -18,8 +25,8 @@ export async function* fetchProjectStatus(
   projects: Iterable<ProjectForDB>,
 ): AsyncGenerator<
   Result<
-    ProjectStatus,
-    (NotLoggedInError | NotFoundError | NotMemberError) & { project: string }
+    Omit<Project, "plan" | "trialing"> & { checked: number },
+    (ProjectError | FetchError) & { project: string }
   >,
   void,
   unknown
@@ -40,11 +47,11 @@ export async function* fetchProjectStatus(
     checkedMap.set(project.name, project.checked);
   }
   const result = await listProjects(projectIds);
-  if (!result.ok) {
+  if (isErr(result)) {
     // log inしていないときは、getProject()で全てのprojectのデータを取得する
     newProjects = names;
   } else {
-    for (const project of result.value.projects) {
+    for (const project of unwrapOk(result).projects) {
       if (!checkedMap.has(project.name)) continue;
       yield createOk({
         ...project,
@@ -54,8 +61,8 @@ export async function* fetchProjectStatus(
   }
   for (const name of newProjects) {
     const res = await getProject(name);
-    yield res.ok
-      ? createOk({ ...res.value, checked: checkedMap.get(name) ?? 0 })
-      : createErr({ ...res.value, project: name });
+    yield isOk(res)
+      ? createOk({ ...unwrapOk(res), checked: checkedMap.get(name) ?? 0 })
+      : createErr({ ...unwrapErr(res), project: name });
   }
 }
