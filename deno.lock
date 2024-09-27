@@ -3,14 +3,14 @@
   "packages": {
     "specifiers": {
       "jsr:@core/unknownutil@^4.0.0": "jsr:@core/unknownutil@4.3.0",
-      "jsr:@cosense/std@^0.29.0": "jsr:@cosense/std@0.29.0",
+      "jsr:@cosense/std@^0.29.0": "jsr:@cosense/std@0.29.1",
       "jsr:@cosense/types@0.10": "jsr:@cosense/types@0.10.1",
       "jsr:@progfay/scrapbox-parser@9": "jsr:@progfay/scrapbox-parser@9.1.5",
       "jsr:@std/async@1": "jsr:@std/async@1.0.5",
       "jsr:@std/bytes@^1.0.2": "jsr:@std/bytes@1.0.2",
       "jsr:@std/encoding@1": "jsr:@std/encoding@1.0.5",
       "jsr:@std/json@^1.0.0": "jsr:@std/json@1.0.0",
-      "jsr:@std/streams@^1.0.0": "jsr:@std/streams@1.0.5",
+      "jsr:@std/streams@^1.0.0": "jsr:@std/streams@1.0.6",
       "jsr:@takker/debug-js@0.1": "jsr:@takker/debug-js@0.1.2",
       "jsr:@takker/md5@0.1": "jsr:@takker/md5@0.1.0",
       "npm:date-fns@4": "npm:date-fns@4.1.0",
@@ -23,8 +23,8 @@
       "@core/unknownutil@4.3.0": {
         "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
       },
-      "@cosense/std@0.29.0": {
-        "integrity": "8d861520011d331bc45e9334f50b733a8ad6f79453382576c8ca4f7e4a6c1be1",
+      "@cosense/std@0.29.1": {
+        "integrity": "797c393fe9874079d42b18055c0c1b754e1d771f29c0dd2d21f9d8530b618ae6",
         "dependencies": [
           "jsr:@core/unknownutil@^4.0.0",
           "jsr:@cosense/types@0.10",
@@ -58,8 +58,8 @@
           "jsr:@std/streams@^1.0.0"
         ]
       },
-      "@std/streams@1.0.5": {
-        "integrity": "74e5c73d7d68eeab0d7fba3b05cbee3ba4ac5ae37c5f4e675f67e62f8f53edc4",
+      "@std/streams@1.0.6": {
+        "integrity": "022ed94e380d06b4d91c49eb70241b7289ab78b8c2b4c4bbb7eb265e4997c25c",
         "dependencies": [
           "jsr:@std/bytes@^1.0.2"
         ]
