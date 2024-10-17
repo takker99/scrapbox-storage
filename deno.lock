@@ -15,7 +15,7 @@
       "jsr:@takker/md5@0.1": "jsr:@takker/md5@0.1.0",
       "npm:date-fns@4": "npm:date-fns@4.1.0",
       "npm:idb@8": "npm:idb@8.0.0",
-      "npm:option-t@49": "npm:option-t@49.2.1",
+      "npm:option-t@50": "npm:option-t@50.0.0",
       "npm:option-t@^49.1.0": "npm:option-t@49.2.0",
       "npm:socket.io-client@^4.7.5": "npm:socket.io-client@4.8.0"
     },
@@ -112,8 +112,8 @@
         "integrity": "sha512-Div3PZRWovCM7O10oWJDE4aXshu5X5Jc1MIY2cwasaoyhpso7j2yntdZZg39peZ8ZOcGvga7JzmlyaNwKFv/dA==",
         "dependencies": {}
       },
-      "option-t@49.2.1": {
-        "integrity": "sha512-ueUhVyOyiNJ7Bd0Qkv5HWaqfCX331ZoslSTYq7xhlu8pP+8YKcKzGHVGcDZOpjXlehyS0rPd9w8OXFRfL1d52Q==",
+      "option-t@50.0.0": {
+        "integrity": "sha512-zHw9Et+SfAx3Xtl9LagyAjyyzC3pNONEinTAOmZN2IKL0dYa6dthjzwuSRueJ2gLkaTiinQjRDGo/1mKSl70hg==",
         "dependencies": {}
       },
       "socket.io-client@4.8.0": {
@@ -150,7 +150,7 @@
       "jsr:@takker/debug-js@0.1",
       "npm:date-fns@4",
       "npm:idb@8",
-      "npm:option-t@49"
+      "npm:option-t@50"
     ]
   }
 }
