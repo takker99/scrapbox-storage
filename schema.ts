@@ -3,7 +3,7 @@ import type { Project } from "@cosense/types/rest";
 import type { Link } from "./link.ts";
 
 /** リンクデータDBのschema */
-export interface SchemaV2 extends DBSchema {
+export interface Schema extends DBSchema {
   /** link dataを格納するstore */
   titles: {
     value: Link;
@@ -17,7 +17,7 @@ export interface SchemaV2 extends DBSchema {
   /** projectの更新状況を格納するstore */
   projects: {
     value: ProjectForDB;
-    /** project name */
+    /** project id */
     key: string;
     indexes: {
       checked: number;
@@ -39,8 +39,11 @@ export interface ValidProject extends Omit<Project, "trialing"> {
 }
 
 export interface InvalidProject {
-  /** project name (key) */
-  name: string;
+  /** project id (key)
+   *
+   * If the project id cannot be obtained because of NotFoundError and so on, the project name is used as the key.
+   */
+  id: string;
 
   /** データの最終確認日時 */
   checked: number;
