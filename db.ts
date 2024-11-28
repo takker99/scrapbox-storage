@@ -9,7 +9,7 @@ let db: IDBPDatabase<SchemaV2>;
 
 /** DBを取得する。まだ開いていなければ一度だけ開く */
 export const open = async (): Promise<IDBPDatabase<SchemaV2>> => {
-  db ??= await openDB<SchemaV2>("scrapbox-storage-test", 2, {
+  db ??= await openDB<SchemaV2>("scrapbox-storage", 2, {
     upgrade(db) {
       logger.time("update DB");
 
