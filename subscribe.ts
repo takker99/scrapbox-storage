@@ -1,9 +1,13 @@
 import type { Link } from "./link.ts";
 
+/**
+ * A type representing a function that listens for {@linkcode LinkEvent} events.
+ */
 export type Listener = (event: LinkEvent) => void;
 
 /** リンク更新時に送られるイベント */
 export interface LinkEvent {
+  /** event type */
   type: "links:changed";
   /** 更新されたproject */
   project: string;
@@ -11,26 +15,30 @@ export interface LinkEvent {
   diff: Diff;
 }
 
+/**
+ * Represents the differences between two sets of pages.
+ */
 export interface Diff {
-  /** added pages
+  /**
+   * Pages that have been added.
    *
-   * key is page id
+   * The key is the page ID, and the value is the link data for the added page.
    */
-  added: Map<string, Link>;
+  added?: Map<string, Link>;
 
-  /** updated pages
+  /**
+   * Pages that have been updated.
    *
-   * key is page id
-   *
-   * the value is a tuple of old and new link data
+   * The key is the page ID, and the value is a tuple containing the old and new link data for the updated page.
    */
-  updated: Map<string, [Link, Link]>;
+  updated?: Map<string, [Link, Link]>;
 
-  /** deleted page ids
+  /**
+   * Pages that have been deleted.
    *
-   * key is page id
+   * The key is the page ID, and the value is the link data for the deleted page.
    */
-  deleted: Map<string, Link>;
+  deleted?: Map<string, Link>;
 }
 
 /** リンクデータの更新を購読する
@@ -52,6 +60,10 @@ export const subscribe = (
 
 /** リンクデータの更新を通知する */
 export const emitChange = (project: string, diff: Diff): void => {
+  if (
+    (diff.added?.size ?? 0) + (diff.updated?.size ?? 0) +
+        (diff.deleted?.size ?? 0) === 0
+  ) return;
   const event: LinkEvent = { type: "links:changed", project, diff };
   emitChangeToListeners(event);
   const bc = new BroadcastChannel(notifyChannelName);

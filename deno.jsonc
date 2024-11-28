@@ -3,20 +3,17 @@
   "version": "0.0.0",
   "exports": "./mod.ts",
   "tasks": {
-    "check": "deno fmt && deno lint --fix && deno check --remote **/*.ts",
-    "check:dry": "deno fmt --check && deno lint && deno check --remote **/*.ts",
-    "update:check": "deno run --allow-env --allow-read --allow-write=.,'~/.local/share/deno-wasmbuild' --allow-run=git,deno --allow-net=deno.land,raw.githubusercontent.com,esm.sh,jsr.io,registry.npmjs.org,api.jsr.io jsr:@molt/cli@0.19",
-    "update": "deno task update:check --write",
-    "publish:check": "deno task check:dry && deno publish --dry-run --allow-dirty",
+    "fix": "deno fmt && deno lint --fix && deno doc --lint mod.ts && deno check --remote **/*.ts && deno publish --dry-run --allow-dirty",
+    "check": "deno fmt --check && deno lint && deno doc --lint mod.ts && deno check --remote **/*.ts && deno publish --dry-run --allow-dirty",
     "publish": "deno run --allow-env --allow-run=deno --allow-read --allow-write=deno.jsonc jsr:@david/publish-on-tag@0.1.x"
   },
   "imports": {
-    "@cosense/std": "jsr:@cosense/std@^0.29.0",
+    "@cosense/std": "jsr:@cosense/std@0.29",
     "@cosense/types": "jsr:@cosense/types@0.10",
     "@takker/debug-js": "jsr:@takker/debug-js@0.1",
     "idb": "npm:idb@8",
     "date-fns": "npm:date-fns@4",
-    "option-t": "npm:option-t@50"
+    "option-t": "npm:option-t@^50.0.1"
   },
   "compilerOptions": {
     "lib": [

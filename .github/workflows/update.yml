@@ -1,4 +1,3 @@
-# ported from https://github.com/jsr-core/unknownutil/blob/v3.18.1/.github/workflows/udd.yml and modified a bit
 name: Update
 
 on:
@@ -7,10 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  DENO_VERSION: 1.x
+  DENO_VERSION: 2.x
 
 jobs:
-  udd:
+  update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +18,7 @@ jobs:
           deno-version: ${{ env.DENO_VERSION }}
       - name: Update dependencies
         run: |
-          deno task update > ../output.txt
+          deno outdated --update > ../output.txt
         env:
           NO_COLOR: 1
       - name: Read ../output.txt
@@ -27,12 +26,12 @@ jobs:
         uses: juliangruber/read-file-action@v1
         with:
           path: ../output.txt
-      - uses: peter-evans/create-pull-request@v6
+      - uses: peter-evans/create-pull-request@v7
         with:
-          commit-message: ":package: Update Deno dependencies"
-          title: ":package: Update Deno dependencies"
+          commit-message: "chore: Update Deno dependencies"
+          title: "chore: Update Deno dependencies"
           body: |
-            The output of `deno task update` is
+            The output of `deno outdated --update` is
 
             ```
             ${{ steps.log.outputs.content }}

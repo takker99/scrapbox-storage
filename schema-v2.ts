@@ -11,7 +11,6 @@ export interface SchemaV2 extends DBSchema {
     key: string;
     indexes: {
       project: string;
-      updated: number;
     };
   };
 
