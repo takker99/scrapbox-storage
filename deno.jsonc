@@ -5,7 +5,6 @@
   "tasks": {
     "fix": "deno fmt && deno lint --fix && deno doc --lint mod.ts && deno check --remote **/*.ts && deno publish --dry-run --allow-dirty",
     "check": "deno fmt --check && deno lint && deno doc --lint mod.ts && deno check --remote **/*.ts && deno publish --dry-run --allow-dirty",
-    "publish:check": "deno task check:dry && deno publish --dry-run --allow-dirty",
     "publish": "deno run --allow-env --allow-run=deno --allow-read --allow-write=deno.jsonc jsr:@david/publish-on-tag@0.1.x"
   },
   "imports": {
