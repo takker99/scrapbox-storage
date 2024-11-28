@@ -2,7 +2,7 @@ import { createDebug } from "@takker/debug-js";
 import { readProjects } from "./project.ts";
 import { open } from "./db.ts";
 import { type Diff, emitChange } from "./subscribe.ts";
-import type { ProjectForDB, ValidProject } from "./schema-v2.ts";
+import type { ProjectForDB, ValidProject } from "./schema.ts";
 import { getUnixTime } from "date-fns/getUnixTime";
 import { isErr, unwrapErr, unwrapOk } from "option-t/plain_result";
 import { readLinksBulk } from "@cosense/std/rest";
@@ -23,13 +23,14 @@ export const check = async (
 ): Promise<void> => {
   const db = await open();
 
-  /** project name がkey */
+  /** project id がkey */
   const projectStatus = new Map<string, ProjectForDB>();
   try {
     // 更新する必要のあるデータを探し、更新中フラグを立てる
     {
       logger.debug("check updates of links...");
 
+      const loadedProjectNames = new Set<string>();
       const tx = db.transaction("projects", "readwrite");
       const now = getUnixTime(new Date());
       const lower = now - 600;
@@ -39,25 +40,28 @@ export const check = async (
         )
       ) {
         const status = cursor.value;
-        if (status?.isValid === false) continue;
+        if (status.isValid === false) {
+          loadedProjectNames.add(status.id);
+          continue;
+        }
+        loadedProjectNames.add(status.name);
 
-        const prevChecked = status?.checked ?? 0;
+        const prevChecked = status.checked;
         // 更新されたばかりのデータは飛ばす
         if (prevChecked + maxAge > now) continue;
         // 更新中にタブが強制終了した可能性を考慮して、更新中フラグが経った時刻より10分経過していたらデータ更新対象に含める
         if (status?.updating && prevChecked > lower) continue;
 
-        const name = status?.name ?? "";
         const tempStatus = structuredClone(status);
         tempStatus.updating = true;
 
-        projectStatus.set(name, tempStatus);
+        projectStatus.set(status.id, tempStatus);
         cursor.update(tempStatus);
       }
       await tx.done;
 
       for (const project of projects) {
-        if (projectStatus.has(project)) continue;
+        if (loadedProjectNames.has(project)) continue;
         projectStatus.set(project, makeDummyValidProject(project));
       }
 
@@ -95,7 +99,7 @@ export const check = async (
             break;
         }
         projectStatus.set(project, {
-          name: project,
+          id: project,
           checked: now,
           updating: false,
           isValid: false,
@@ -209,7 +213,7 @@ export const check = async (
     // エラーが起きた場合も含め、フラグをもとに戻しておく
     const tx = db.transaction("projects", "readwrite");
     await Promise.all(
-      [...projectStatus.values()].map((status) => {
+      [...projectStatus].map(([, status]) => {
         status.updating = false;
         return tx.store.put({ ...status });
       }),

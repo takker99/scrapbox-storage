@@ -1,15 +1,15 @@
 import { createDebug } from "@takker/debug-js";
 import { type IDBPDatabase, openDB } from "idb";
-import type { SchemaV2 } from "./schema-v2.ts";
+import type { Schema } from "./schema.ts";
 
 const logger = createDebug("scrapbox-storage:db.ts");
 
 /** リンクデータなどを管理するDatabase */
-let db: IDBPDatabase<SchemaV2>;
+let db: IDBPDatabase<Schema>;
 
 /** DBを取得する。まだ開いていなければ一度だけ開く */
-export const open = async (): Promise<IDBPDatabase<SchemaV2>> => {
-  db ??= await openDB<SchemaV2>("scrapbox-storage", 2, {
+export const open = async (): Promise<IDBPDatabase<Schema>> => {
+  db ??= await openDB<Schema>("scrapbox-storage", 3, {
     upgrade(db) {
       logger.time("update DB");
 
@@ -21,7 +21,7 @@ export const open = async (): Promise<IDBPDatabase<SchemaV2>> => {
       titles.createIndex("project", "project");
 
       const projects = db.createObjectStore("projects", {
-        keyPath: "name",
+        keyPath: "id",
       });
       projects.createIndex("checked", "checked");
 

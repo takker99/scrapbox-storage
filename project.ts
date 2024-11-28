@@ -14,7 +14,7 @@ import {
   unwrapOk,
 } from "option-t/plain_result";
 import type { Project } from "@cosense/types/rest";
-import type { ProjectForDB } from "./schema-v2.ts";
+import type { ProjectForDB } from "./schema.ts";
 
 export interface ProjectStatus extends Omit<Project, "plan" | "trialing"> {
   checked: number;
