@@ -10,7 +10,7 @@ import type { Link } from "./link.ts";
 export * from "./link.ts";
 export * from "./subscribe.ts";
 
-const logger = createDebug("scrapbox-storage:mod.ts");
+const logger = /*@__PURE__*/ createDebug("scrapbox-storage:mod.ts");
 
 /** 手動で更新を確認する。更新があればDBに反映する。
  *

@@ -2,7 +2,7 @@ import { createDebug } from "@takker/debug-js";
 import { type IDBPDatabase, openDB } from "idb";
 import type { Schema } from "./schema.ts";
 
-const logger = createDebug("scrapbox-storage:db.ts");
+const logger = /*@__PURE__*/ createDebug("scrapbox-storage:db.ts");
 
 /** リンクデータなどを管理するDatabase */
 let db: IDBPDatabase<Schema>;
