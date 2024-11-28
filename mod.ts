@@ -118,15 +118,17 @@ export const check = async (
         continue;
       }
 
-      const diff: Diff = {
-        added: new Map(),
-        updated: new Map(),
-        deleted: new Map(),
-      };
-      let prevLower = 0;
-
       const tag = `download and store links of "${project.name}"`;
       logger.time(tag);
+      const titleIds = new Set(
+        await db.getAllKeysFromIndex(
+          "titles",
+          "project",
+          project.name,
+        ),
+      );
+      let addedCount = 0;
+      let updatedCount = 0;
       // pagesを取得し、更新分をDBに反映する
       for await (const result of readLinksBulk(project.name)) {
         if (isErr(result)) {
@@ -137,51 +139,60 @@ export const check = async (
           break;
         }
         const titles = unwrapOk(result);
-        for (const title of titles) {
-          diff.added.set(title.id, { ...title, project: project.name });
-        }
 
-        // 取得したページは更新日時順に並んでいる。
-        // よって、その範囲と同じ範囲のデータだけをDBから逐次読み込んでいけば、
-        // 一度にDB全体のキーを走査することなく、削除されたページを特定できる。
-        const upper = Math.max(...titles.map((title) => title.updated));
-        const range = IDBKeyRange.bound(
-          prevLower,
-          upper,
-          true,
-        );
-        prevLower = upper;
+        const diff: Diff = {};
 
         const tx = db.transaction("titles", "readwrite");
-        for await (const cursor of tx.store.index("updated").iterate(range)) {
-          const page = cursor.value;
-          if (page.project !== project.name) continue;
-          const newPage = diff.added.get(page.id);
-          if (!newPage) {
-            diff.deleted.set(page.id, page);
-            continue;
-          }
-          diff.deleted.delete(page.id);
-          if (page.updated < newPage.updated) {
-            diff.updated.set(page.id, [page, newPage]);
-            cursor.update(newPage);
-          }
-          diff.added.delete(page.id);
-        }
+        await Promise.all(
+          titles.map(async (title) => {
+            const link = { ...title, project: project.name };
+            if (!titleIds.has(title.id)) {
+              diff.added?.set?.(title.id, link) ??
+                (diff.added = new Map([[title.id, link]]));
+              return tx.store.add(link);
+            }
+            titleIds.delete(title.id);
+            const fromLocal = await tx.store.get(title.id);
+            if (!fromLocal) {
+              diff.added?.set?.(title.id, link) ??
+                (diff.added = new Map([[title.id, link]]));
+              return tx.store.add(link);
+            }
+            if (fromLocal.updated >= link.updated) return;
+            diff.updated?.set?.(title.id, [fromLocal, link]) ??
+              (diff.updated = new Map([[title.id, [fromLocal, link]]]));
+            return tx.store.put(link);
+          }),
+        );
         await tx.done;
+
+        addedCount += diff.added?.size ?? 0;
+        updatedCount += diff.updated?.size ?? 0;
+
+        logger.debug(
+          `Updating "/${project.name}": +${addedCount} pages, ~${updatedCount} pages`,
+        );
+
+        emitChange(project.name, diff);
       }
 
       const tx = db.transaction("titles", "readwrite");
-      await Promise.all([
-        // add new pages
-        ...[...diff.added].map(([pageId, page]) => tx.store.put(page, pageId)),
-        // delete dropped pages
-        ...[...diff.deleted].map(([pageId]) => tx.store.delete(pageId)),
-      ]);
+      const deleted = new Map(
+        (await Promise.all(
+          // delete dropped titles
+          [...titleIds].map(async (id) => {
+            const link = await tx.store.get(id);
+            if (!link) return [];
+            const entry = [[id, link]] as const;
+            await tx.store.delete(id);
+            return entry;
+          }),
+        )).flat(),
+      );
       await tx.done;
       logger.timeEnd(tag);
       logger.debug(
-        `Update "/${project.name}": +${diff.added.size} pages, ~${diff.updated.size} pages, -${diff.deleted.size} pages`,
+        `Update "/${project.name}": +${addedCount} pages, ~${updatedCount} pages, -${deleted.size} pages`,
       );
 
       projectStatus.set(project.name, {
@@ -192,7 +203,7 @@ export const check = async (
       });
 
       // リンクの差分を通知する
-      emitChange(project.name, diff);
+      emitChange(project.name, { deleted });
     }
   } finally {
     // エラーが起きた場合も含め、フラグをもとに戻しておく
