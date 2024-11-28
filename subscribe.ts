@@ -51,6 +51,15 @@ export const subscribe = (
   projects: Iterable<string>,
   listener: Listener,
 ): () => void => {
+  // 他のsessionsでの更新を購読する
+  if (!bc) {
+    bc = new BroadcastChannel(notifyChannelName);
+    bc.addEventListener(
+      "message",
+      (e: MessageEvent<LinkEvent>) => emitChangeToListeners(e.data),
+    );
+  }
+
   listeners.set(
     listener,
     new Set(projects).union(listeners.get(listener) ?? new Set()),
@@ -81,13 +90,7 @@ const emitChangeToListeners = (event: LinkEvent) => {
 };
 
 /** 更新通知用broadcast channelの名前 */
-const notifyChannelName = "scrapbox-storage-notify";
-// 他のsessionsでの更新を購読する
-const bc = new BroadcastChannel(notifyChannelName);
-bc.addEventListener(
-  "message",
-  (e: MessageEvent<LinkEvent>) => emitChangeToListeners(e.data),
-);
-
+const notifyChannelName = /*@__PURE__*/ "scrapbox-storage-notify";
+let bc: BroadcastChannel;
 /** listenerをkey, listenerが監視するprojectのリストをvalueとしたmap */
-const listeners = new Map<Listener, Set<string>>();
+const listeners = /*@__PURE__*/ new Map<Listener, Set<string>>();
