@@ -18,7 +18,7 @@ const logger = /*@__PURE__*/ createDebug("scrapbox-storage:mod.ts");
  * @param maxAge 最後に更新を確認してからどのくらい経過したデータを更新すべきか (単位は秒)
  */
 export const check = async (
-  projects: readonly string[],
+  projects: Iterable<string>,
   maxAge: number,
 ): Promise<void> => {
   const db = await open();
@@ -58,12 +58,21 @@ export const check = async (
         projectStatus.set(status.id, tempStatus);
         cursor.update(tempStatus);
       }
-      await tx.done;
-
+      const job: Promise<unknown>[] = [];
+      const index = tx.store.index("name");
       for (const project of projects) {
         if (loadedProjectNames.has(project)) continue;
-        projectStatus.set(project, makeDummyValidProject(project));
+        job.push(
+          index.get(project).then((projectForDB) => {
+            projectStatus.set(
+              project,
+              projectForDB ?? makeDummyValidProject(project),
+            );
+          }),
+        );
       }
+      await Promise.all(job);
+      await tx.done;
 
       // 更新するprojectsがなければ何もしない
       if (projectStatus.size === 0) {
@@ -100,6 +109,7 @@ export const check = async (
         }
         projectStatus.set(project, {
           id: project,
+          name: project,
           checked: now,
           updating: false,
           isValid: false,
