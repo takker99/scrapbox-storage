@@ -20,6 +20,7 @@ export interface Schema extends DBSchema {
     /** project id */
     key: string;
     indexes: {
+      name: string;
       checked: number;
     };
   };
@@ -44,6 +45,9 @@ export interface InvalidProject {
    * If the project id cannot be obtained because of NotFoundError and so on, the project name is used as the key.
    */
   id: string;
+
+  /** project name */
+  name: string;
 
   /** データの最終確認日時 */
   checked: number;
