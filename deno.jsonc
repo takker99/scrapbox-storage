@@ -14,7 +14,7 @@
     "@takker/debug-js": "jsr:@takker/debug-js@0.1",
     "idb": "npm:idb@8",
     "date-fns": "npm:date-fns@4",
-    "option-t": "npm:option-t@^50.0.1"
+    "option-t": "npm:option-t@^50.0.2"
   },
   "compilerOptions": {
     "lib": [

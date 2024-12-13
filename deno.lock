@@ -12,7 +12,7 @@
     "npm:date-fns@4": "4.1.0",
     "npm:idb@8": "8.0.0",
     "npm:option-t@50": "50.0.0",
-    "npm:option-t@^50.0.1": "50.0.1",
+    "npm:option-t@^50.0.2": "50.0.2",
     "npm:socket.io-client@^4.7.5": "4.8.1"
   },
   "jsr": {
@@ -86,8 +86,8 @@
     "option-t@50.0.0": {
       "integrity": "sha512-zHw9Et+SfAx3Xtl9LagyAjyyzC3pNONEinTAOmZN2IKL0dYa6dthjzwuSRueJ2gLkaTiinQjRDGo/1mKSl70hg=="
     },
-    "option-t@50.0.1": {
-      "integrity": "sha512-QZkAjLrO0fY8DICD0tXJtjnsd7wGjgDDyPOvRf+bmIZAwAt98V0TiQ2JqN9gElAxHw2Dz376lPrZtvimcBGAbA=="
+    "option-t@50.0.2": {
+      "integrity": "sha512-tIGimxb003CDEqu7f+SJtDDVK5LKAlbLt7q5tW5vFMiBb7QXqESXhgmP5bF+BUnShOKRTBfI/PHZBv7I+NHlig=="
     },
     "socket.io-client@4.8.1": {
       "integrity": "sha512-hJVXfu3E28NmzGk8o1sHhN3om52tRvwYeidbj7xKy2eIIse5IoKX3USlS6Tqt3BHAtflLIkCQBkzVrEEfWUyYQ==",
@@ -119,7 +119,7 @@
       "jsr:@takker/debug-js@0.1",
       "npm:date-fns@4",
       "npm:idb@8",
-      "npm:option-t@^50.0.1"
+      "npm:option-t@^50.0.2"
     ]
   }
 }
