@@ -10,7 +10,7 @@
   },
   "imports": {
     "@cosense/std": "jsr:@cosense/std@0.29",
-    "@cosense/types": "jsr:@cosense/types@0.10",
+    "@cosense/types": "jsr:@cosense/types@^0.10.4",
     "@takker/debug-js": "jsr:@takker/debug-js@0.1",
     "idb": "npm:idb@^8.0.1",
     "date-fns": "npm:date-fns@4",
