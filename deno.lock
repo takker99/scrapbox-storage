@@ -6,8 +6,8 @@
     "jsr:@cosense/types@0.10": "0.10.4",
     "jsr:@cosense/types@~0.10.4": "0.10.4",
     "jsr:@std/encoding@1": "1.0.6",
-    "jsr:@takker/debug-js@0.1": "0.1.2",
     "jsr:@takker/md5@0.1": "0.1.0",
+    "npm:@logtape/logtape@0.8": "0.8.0",
     "npm:date-fns@4": "4.1.0",
     "npm:idb@^8.0.1": "8.0.1",
     "npm:option-t@50": "50.0.2",
@@ -33,14 +33,14 @@
     "@std/encoding@1.0.6": {
       "integrity": "ca87122c196e8831737d9547acf001766618e78cd8c33920776c7f5885546069"
     },
-    "@takker/debug-js@0.1.2": {
-      "integrity": "e40584f3705bec776fb469b46fc084a28e967e3a89b20df492ec4f641ecc4af0"
-    },
     "@takker/md5@0.1.0": {
       "integrity": "4c423d8247aadf7bcb1eb83c727bf28c05c21906e916517395d00aa157b6eae0"
     }
   },
   "npm": {
+    "@logtape/logtape@0.8.0": {
+      "integrity": "sha512-kTGbRE4tbHGlZk3+k9fIJbrLODcDiAvv9X2q+tHXjWyNjWXEH46efDBjsE63zDzR/b6Q4Abiloa4VNwKSDLyzQ=="
+    },
     "date-fns@4.1.0": {
       "integrity": "sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg=="
     },
@@ -55,7 +55,7 @@
     "dependencies": [
       "jsr:@cosense/std@~0.29.3",
       "jsr:@cosense/types@~0.10.4",
-      "jsr:@takker/debug-js@0.1",
+      "npm:@logtape/logtape@0.8",
       "npm:date-fns@4",
       "npm:idb@^8.0.1",
       "npm:option-t@^50.0.2"

@@ -1,17 +1,17 @@
-import { createDebug } from "@takker/debug-js";
+import { getLogger } from "logtape";
 import { type IDBPDatabase, openDB } from "idb";
 import type { Schema } from "./schema.ts";
-
-const logger = /*@__PURE__*/ createDebug("scrapbox-storage:db.ts");
 
 /** リンクデータなどを管理するDatabase */
 let db: IDBPDatabase<Schema>;
 
 /** DBを取得する。まだ開いていなければ一度だけ開く */
 export const open = async (): Promise<IDBPDatabase<Schema>> => {
+  const logger = getLogger(["@takker/cosense-storage", "open"]);
   db ??= await openDB<Schema>("scrapbox-storage", 4, {
-    upgrade(db) {
-      logger.time("update DB");
+    upgrade(db, oldVersion, newVersion) {
+      logger.info`start updating DB: ${oldVersion} -> ${newVersion}`;
+      const now = Date.now();
 
       for (const name of db.objectStoreNames) {
         db.deleteObjectStore(name);
@@ -26,7 +26,7 @@ export const open = async (): Promise<IDBPDatabase<Schema>> => {
       projects.createIndex("checked", "checked");
       projects.createIndex("name", "name");
 
-      logger.timeEnd("update DB");
+      logger.info`finish updating DB: ${Date.now() - now}ms`;
     },
     blocked(currentVersion, blockedVersion) {
       const message =

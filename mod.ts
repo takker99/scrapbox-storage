@@ -1,4 +1,4 @@
-import { createDebug } from "@takker/debug-js";
+import { getLogger } from "logtape";
 import { readProjects } from "./project.ts";
 import { open } from "./db.ts";
 import { type Diff, emitChange } from "./subscribe.ts";
@@ -11,8 +11,6 @@ import type { Link } from "./link.ts";
 export * from "./link.ts";
 export * from "./subscribe.ts";
 
-const logger = /*@__PURE__*/ createDebug("scrapbox-storage:mod.ts");
-
 /** 手動で更新を確認する。更新があればDBに反映する。
  *
  * @param projects 更新を確認したい補完ソースのproject names
@@ -23,13 +21,14 @@ export const check = async (
   maxAge: number,
 ): Promise<void> => {
   const db = await open();
+  const logger = getLogger(["@takker/cosense-storage", "check"]);
 
   /** project id がkey */
   const projectStatus = new Map<string, ProjectForDB>();
   try {
     // 更新する必要のあるデータを探し、更新中フラグを立てる
     {
-      logger.debug("check updates of links...");
+      logger.debug`check updates of links...`;
 
       const loadedProjectNames = new Set<string>();
       const tx = db.transaction("projects", "readwrite");
@@ -80,12 +79,10 @@ export const check = async (
 
       // 更新するprojectsがなければ何もしない
       if (projectStatus.size === 0) {
-        logger.debug("checked. No project needs upgrade.");
+        logger.debug`checked. No project needs upgrade.`;
         return;
       }
-      logger.debug(
-        `checked. ${projectStatus.size} projects maybe need upgrade.`,
-      );
+      logger.debug`checked. ${projectStatus.size} projects maybe need upgrade.`;
     }
 
     const now = getUnixTime(new Date());
@@ -126,7 +123,7 @@ export const check = async (
 
       // projectの最終更新日時から、updateの要不要を調べる
       if (project.updated < checked) {
-        logger.debug(`no updates in "${project.name}"`);
+        logger.debug`no updates in "${project.name}"`;
         projectStatus.set(project.name, {
           ...project,
           isValid: true,
@@ -136,8 +133,7 @@ export const check = async (
         continue;
       }
 
-      const tag = `download and store links of "${project.name}"`;
-      logger.time(tag);
+      logger.debug`start downloading and storing links of "${project.name}"`;
       const titleIds = new Set(
         await db.getAllKeysFromIndex(
           "titles",
@@ -151,9 +147,8 @@ export const check = async (
       for await (const result of readLinksBulk(project.name)) {
         if (isErr(result)) {
           const { name, message } = unwrapErr(result);
-          logger.error(
-            `Failed to get links of "${project.name}" with ${name}: ${message}`,
-          );
+          logger
+            .error`Failed to get links of "${project.name}" with ${name}: ${message}`;
           break;
         }
         const titles = unwrapOk(result);
@@ -182,9 +177,8 @@ export const check = async (
         addedCount += diff.added?.size ?? 0;
         updatedCount += diff.updated?.size ?? 0;
 
-        logger.debug(
-          `Updating "/${project.name}": +${addedCount} pages, ~${updatedCount} pages`,
-        );
+        logger
+          .debug`Updating "/${project.name}": +${addedCount} pages, ~${updatedCount} pages`;
 
         emitChange(project.name, diff);
       }
@@ -203,10 +197,9 @@ export const check = async (
         )).flat(),
       );
       await tx.done;
-      logger.timeEnd(tag);
-      logger.debug(
-        `Update "/${project.name}": +${addedCount} pages, ~${updatedCount} pages, -${deleted.size} pages`,
-      );
+      logger.debug`Finish downloading and storing links of "${project.name}"`;
+      logger
+        .debug`Update "/${project.name}": +${addedCount} pages, ~${updatedCount} pages, -${deleted.size} pages`;
 
       projectStatus.set(project.name, {
         ...project,
@@ -248,11 +241,11 @@ export const load = async (
   const links =
     (await Promise.all(keys.map((project) => index.getAll(project)))).flat();
   await tx.done;
-  logger.debug(
-    `Read ${links.length} links from ${keys.length} projects in ${
-      Date.now() - start
-    }ms`,
-  );
+
+  const logger = getLogger(["@takker/cosense-storage", "load"]);
+  logger.debug`Read ${links.length} links from ${keys.length} projects in ${
+    Date.now() - start
+  }ms`;
 
   return links;
 };
