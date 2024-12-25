@@ -2,7 +2,7 @@
   "version": "4",
   "specifiers": {
     "jsr:@core/unknownutil@4": "4.3.0",
-    "jsr:@cosense/std@0.29": "0.29.2",
+    "jsr:@cosense/std@~0.29.3": "0.29.3",
     "jsr:@cosense/types@0.10": "0.10.4",
     "jsr:@cosense/types@~0.10.4": "0.10.4",
     "jsr:@std/encoding@1": "1.0.6",
@@ -17,8 +17,8 @@
     "@core/unknownutil@4.3.0": {
       "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
     },
-    "@cosense/std@0.29.2": {
-      "integrity": "668d473666b38cf8320394dfb96d31625b3856716f591671687d245af211f3d4",
+    "@cosense/std@0.29.3": {
+      "integrity": "0ccefb4c97bec28e5f0006788690f3f41d7f93f50b9b6d1ba4c05cafe4019402",
       "dependencies": [
         "jsr:@core/unknownutil",
         "jsr:@cosense/types@0.10",
@@ -53,7 +53,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cosense/std@0.29",
+      "jsr:@cosense/std@~0.29.3",
       "jsr:@cosense/types@~0.10.4",
       "jsr:@takker/debug-js@0.1",
       "npm:date-fns@4",
