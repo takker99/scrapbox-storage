@@ -6,6 +6,7 @@ import type { ProjectForDB, ValidProject } from "./schema.ts";
 import { getUnixTime } from "date-fns/getUnixTime";
 import { isErr, unwrapErr, unwrapOk } from "option-t/plain_result";
 import { readLinksBulk } from "@cosense/std/rest";
+import type { SearchedTitle } from "@cosense/types/rest";
 import type { Link } from "./link.ts";
 export * from "./link.ts";
 export * from "./subscribe.ts";
@@ -170,7 +171,7 @@ export const check = async (
               return tx.store.add(link);
             }
             titleIds.delete(title.id);
-            if (fromLocal.updated >= link.updated) return;
+            if (!isUpdated(link, fromLocal)) return;
             diff.updated?.set?.(title.id, [fromLocal, link]) ??
               (diff.updated = new Map([[title.id, [fromLocal, link]]]));
             return tx.store.put(link);
@@ -273,3 +274,12 @@ const makeDummyValidProject = (name: string): ValidProject => ({
   created: 0,
   updating: true,
 });
+
+/**
+ * Check `a` is newer than `b`.
+ *
+ * Normally, checking needs  only {@linkcode SearchedTitle.updated}.
+ * But in some cases (e.g. execute the link update), {@linkcode SearchedTitle.links} should be checked.
+ */
+const isUpdated = (a: SearchedTitle, b: SearchedTitle): boolean =>
+  a.updated > b.updated || a.links.sort().join() !== b.links.sort().join();
