@@ -160,18 +160,13 @@ export const check = async (
         await Promise.all(
           titles.map(async (title) => {
             const link = { ...title, project: project.name };
-            if (!titleIds.has(title.id)) {
-              diff.added?.set?.(title.id, link) ??
-                (diff.added = new Map([[title.id, link]]));
-              return tx.store.add(link);
-            }
-            titleIds.delete(title.id);
-            const fromLocal = await tx.store.get(title.id);
+                        const fromLocal = await tx.store.get(title.id);
             if (!fromLocal) {
               diff.added?.set?.(title.id, link) ??
                 (diff.added = new Map([[title.id, link]]));
               return tx.store.add(link);
             }
+titleIds.delete(title.id);
             if (fromLocal.updated >= link.updated) return;
             diff.updated?.set?.(title.id, [fromLocal, link]) ??
               (diff.updated = new Map([[title.id, [fromLocal, link]]]));
