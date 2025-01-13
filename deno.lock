@@ -2,33 +2,45 @@
   "version": "4",
   "specifiers": {
     "jsr:@core/unknownutil@4": "4.3.0",
-    "jsr:@cosense/std@~0.29.3": "0.29.3",
+    "jsr:@cosense/std@~0.29.4": "0.29.4",
     "jsr:@cosense/types@0.10": "0.10.4",
     "jsr:@cosense/types@~0.10.4": "0.10.4",
+    "jsr:@progfay/scrapbox-parser@9": "9.2.0",
+    "jsr:@std/async@1": "1.0.9",
     "jsr:@std/encoding@1": "1.0.6",
     "jsr:@takker/md5@0.1": "0.1.0",
     "npm:@logtape/logtape@0.8": "0.8.0",
     "npm:date-fns@4": "4.1.0",
     "npm:idb@^8.0.1": "8.0.1",
     "npm:option-t@50": "50.0.2",
-    "npm:option-t@^50.0.2": "50.0.2"
+    "npm:option-t@51": "51.0.1",
+    "npm:option-t@^50.0.2": "50.0.2",
+    "npm:socket.io-client@^4.7.5": "4.8.1"
   },
   "jsr": {
     "@core/unknownutil@4.3.0": {
       "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
     },
-    "@cosense/std@0.29.3": {
-      "integrity": "0ccefb4c97bec28e5f0006788690f3f41d7f93f50b9b6d1ba4c05cafe4019402",
+    "@cosense/std@0.29.4": {
+      "integrity": "550d7b55bebaa90b69208cb94d1242e9eb0917bed91f2c66f36b4135b54a62f9",
       "dependencies": [
         "jsr:@core/unknownutil",
-        "jsr:@cosense/types@0.10",
+        "jsr:@progfay/scrapbox-parser",
+        "jsr:@std/async",
         "jsr:@std/encoding",
         "jsr:@takker/md5",
-        "npm:option-t@50"
+        "npm:option-t@51",
+        "npm:socket.io-client"
       ]
     },
     "@cosense/types@0.10.4": {
       "integrity": "04423c152a525df848c067f9c6aa05409baadf9da15d8e4569e1bcedfa3c7624"
+    },
+    "@progfay/scrapbox-parser@9.2.0": {
+      "integrity": "82ebb95e72dd0ea44547fd48e2bcb479fd2275fc26c4515598f742e5aaf6e0e5"
+    },
+    "@std/async@1.0.9": {
+      "integrity": "c6472fd0623b3f3daae023cdf7ca5535e1b721dfbf376562c0c12b3fb4867f91"
     },
     "@std/encoding@1.0.6": {
       "integrity": "ca87122c196e8831737d9547acf001766618e78cd8c33920776c7f5885546069"
@@ -41,19 +53,69 @@
     "@logtape/logtape@0.8.0": {
       "integrity": "sha512-kTGbRE4tbHGlZk3+k9fIJbrLODcDiAvv9X2q+tHXjWyNjWXEH46efDBjsE63zDzR/b6Q4Abiloa4VNwKSDLyzQ=="
     },
+    "@socket.io/component-emitter@3.1.2": {
+      "integrity": "sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA=="
+    },
     "date-fns@4.1.0": {
       "integrity": "sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg=="
+    },
+    "debug@4.3.7": {
+      "integrity": "sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==",
+      "dependencies": [
+        "ms"
+      ]
+    },
+    "engine.io-client@6.6.2": {
+      "integrity": "sha512-TAr+NKeoVTjEVW8P3iHguO1LO6RlUz9O5Y8o7EY0fU+gY1NYqas7NN3slpFtbXEsLMHk0h90fJMfKjRkQ0qUIw==",
+      "dependencies": [
+        "@socket.io/component-emitter",
+        "debug",
+        "engine.io-parser",
+        "ws",
+        "xmlhttprequest-ssl"
+      ]
+    },
+    "engine.io-parser@5.2.3": {
+      "integrity": "sha512-HqD3yTBfnBxIrbnM1DoD6Pcq8NECnh8d4As1Qgh0z5Gg3jRRIqijury0CL3ghu/edArpUYiYqQiDUQBIs4np3Q=="
     },
     "idb@8.0.1": {
       "integrity": "sha512-EkBCzUZSdhJV8PxMSbeEV//xguVKZu9hZZulM+2gHXI0t2hGVU3eYE6/XnH77DS6FM2FY8wl17aDcu9vXpvLWQ=="
     },
+    "ms@2.1.3": {
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
+    },
     "option-t@50.0.2": {
       "integrity": "sha512-tIGimxb003CDEqu7f+SJtDDVK5LKAlbLt7q5tW5vFMiBb7QXqESXhgmP5bF+BUnShOKRTBfI/PHZBv7I+NHlig=="
+    },
+    "option-t@51.0.1": {
+      "integrity": "sha512-/M5KCGp6SQS4luBoWE1r3G3BZbRPuPfedHpVwJa7UGj98nNqQ2HBuy0E4fGFa4GKzTP+hnxFIs+HKtAq6DNA+w=="
+    },
+    "socket.io-client@4.8.1": {
+      "integrity": "sha512-hJVXfu3E28NmzGk8o1sHhN3om52tRvwYeidbj7xKy2eIIse5IoKX3USlS6Tqt3BHAtflLIkCQBkzVrEEfWUyYQ==",
+      "dependencies": [
+        "@socket.io/component-emitter",
+        "debug",
+        "engine.io-client",
+        "socket.io-parser"
+      ]
+    },
+    "socket.io-parser@4.2.4": {
+      "integrity": "sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==",
+      "dependencies": [
+        "@socket.io/component-emitter",
+        "debug"
+      ]
+    },
+    "ws@8.17.1": {
+      "integrity": "sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ=="
+    },
+    "xmlhttprequest-ssl@2.1.2": {
+      "integrity": "sha512-TEU+nJVUUnA4CYJFLvK5X9AOeH4KvDvhIfm0vV1GaQRtchnG0hgK5p8hw/xjv8cunWYCsiPCSDzObPyhEwq3KQ=="
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cosense/std@~0.29.3",
+      "jsr:@cosense/std@~0.29.4",
       "jsr:@cosense/types@~0.10.4",
       "npm:@logtape/logtape@0.8",
       "npm:date-fns@4",
