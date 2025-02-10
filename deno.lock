@@ -2,7 +2,7 @@
   "version": "4",
   "specifiers": {
     "jsr:@core/unknownutil@4": "4.3.0",
-    "jsr:@cosense/std@~0.29.8": "0.29.8",
+    "jsr:@cosense/std@~0.29.9": "0.29.9",
     "jsr:@cosense/types@~0.10.7": "0.10.7",
     "jsr:@progfay/scrapbox-parser@9": "9.2.0",
     "jsr:@std/async@1": "1.0.10",
@@ -20,10 +20,11 @@
     "@core/unknownutil@4.3.0": {
       "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
     },
-    "@cosense/std@0.29.8": {
-      "integrity": "f735dd57dfddac53a5b1b8ff3fdad376bfbda8e9ae1d76a29353b5cf40f41dbf",
+    "@cosense/std@0.29.9": {
+      "integrity": "52ca573501d1004b2c31c422e61e728aa6cc9706c0d301790f9738240f0212b0",
       "dependencies": [
         "jsr:@core/unknownutil",
+        "jsr:@cosense/types",
         "jsr:@progfay/scrapbox-parser",
         "jsr:@std/async",
         "jsr:@std/encoding",
@@ -114,7 +115,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cosense/std@~0.29.8",
+      "jsr:@cosense/std@~0.29.9",
       "jsr:@cosense/types@~0.10.7",
       "npm:@logtape/logtape@~0.8.1",
       "npm:date-fns@4",
