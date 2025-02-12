@@ -8,7 +8,7 @@
     "jsr:@std/async@1": "1.0.10",
     "jsr:@std/encoding@1": "1.0.7",
     "jsr:@takker/md5@0.1": "0.1.0",
-    "npm:@logtape/logtape@~0.8.1": "0.8.1",
+    "npm:@logtape/logtape@~0.8.2": "0.8.2",
     "npm:date-fns@4": "4.1.0",
     "npm:idb@^8.0.2": "8.0.2",
     "npm:option-t@50": "50.0.2",
@@ -50,8 +50,8 @@
     }
   },
   "npm": {
-    "@logtape/logtape@0.8.1": {
-      "integrity": "sha512-I12BwnMgI/M/0AtkSRKRV2QeHZUWm2RWaC9CuhsXTLEr5In8ezc0DXhMI0anP+ux2NRtzitjum2TfHfQ8sFYzg=="
+    "@logtape/logtape@0.8.2": {
+      "integrity": "sha512-KikaMHi64p0BHYrYOE2Lom4dOE3R8PGT+21QJ5Ql/SWy0CNOp69dkAlG9RXzENQ6PAMWtiU+4kelJYNvfUvHOQ=="
     },
     "@socket.io/component-emitter@3.1.2": {
       "integrity": "sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA=="
@@ -117,7 +117,7 @@
     "dependencies": [
       "jsr:@cosense/std@~0.29.9",
       "jsr:@cosense/types@~0.10.7",
-      "npm:@logtape/logtape@~0.8.1",
+      "npm:@logtape/logtape@~0.8.2",
       "npm:date-fns@4",
       "npm:idb@^8.0.2",
       "npm:option-t@^50.0.2"
