@@ -9,7 +9,7 @@
     "doc": "deno doc --html mod.ts"
   },
   "imports": {
-    "@cosense/std": "jsr:@cosense/std@^0.29.9",
+    "@cosense/std": "jsr:@cosense/std@^0.29.10",
     "@cosense/types": "jsr:@cosense/types@^0.10.7",
     "logtape": "npm:@logtape/logtape@^0.8.2",
     "idb": "npm:idb@^8.0.2",
