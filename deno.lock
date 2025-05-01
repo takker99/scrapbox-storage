@@ -1,14 +1,14 @@
 {
-  "version": "4",
+  "version": "5",
   "specifiers": {
     "jsr:@core/iterutil@0.9": "0.9.0",
     "jsr:@core/unknownutil@4": "4.3.0",
-    "jsr:@cosense/std@~0.29.12": "0.29.12",
+    "jsr:@cosense/std@~0.29.13": "0.29.13",
     "jsr:@cosense/types@~0.10.7": "0.10.8",
     "jsr:@cosense/types@~0.10.8": "0.10.8",
     "jsr:@progfay/scrapbox-parser@9": "9.2.0",
     "jsr:@std/async@^1.0.11": "1.0.12",
-    "jsr:@std/encoding@1": "1.0.9",
+    "jsr:@std/encoding@1": "1.0.10",
     "jsr:@takker/md5@0.1": "0.1.0",
     "npm:@logtape/logtape@~0.8.2": "0.8.2",
     "npm:date-fns@4": "4.1.0",
@@ -25,8 +25,8 @@
     "@core/unknownutil@4.3.0": {
       "integrity": "538a3687ffa81028e91d148818047df219663d0da671d906cecd165581ae55cc"
     },
-    "@cosense/std@0.29.12": {
-      "integrity": "18c012e508ceb5c9ccae49b5b7cd4bd74dc1a44858fa462f9048d8d6a9735dc4",
+    "@cosense/std@0.29.13": {
+      "integrity": "4a18abee6c0d6b796ecc38b9037069372fdf94b5368dff6fc3562bb77143510f",
       "dependencies": [
         "jsr:@core/iterutil",
         "jsr:@core/unknownutil",
@@ -48,8 +48,8 @@
     "@std/async@1.0.12": {
       "integrity": "d1bfcec459e8012846fe4e38dfc4241ab23240ecda3d8d6dfcf6d81a632e803d"
     },
-    "@std/encoding@1.0.9": {
-      "integrity": "025b8f18eb1749bc30d1353bf48b77d1eb5e35610220fa226f5a046b9240c5d7"
+    "@std/encoding@1.0.10": {
+      "integrity": "8783c6384a2d13abd5e9e87a7ae0520a30e9f56aeeaa3bdf910a3eaaf5c811a1"
     },
     "@takker/md5@0.1.0": {
       "integrity": "4c423d8247aadf7bcb1eb83c727bf28c05c21906e916517395d00aa157b6eae0"
@@ -121,7 +121,7 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cosense/std@~0.29.12",
+      "jsr:@cosense/std@~0.29.13",
       "jsr:@cosense/types@~0.10.8",
       "npm:@logtape/logtape@~0.8.2",
       "npm:date-fns@4",
